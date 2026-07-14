@@ -1,6 +1,7 @@
 import { sequelize } from '../config/database';
 import { logger } from '../utils/logger';
-import migration = require('../../migrations/20260714153811-create-productivity-features.js');
+// @ts-ignore
+import migration from '../../migrations/20260714153811-create-productivity-features.js';
 
 export async function runDatabaseMigrations() {
   try {
