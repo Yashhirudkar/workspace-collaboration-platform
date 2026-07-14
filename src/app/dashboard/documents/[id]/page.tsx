@@ -2,7 +2,7 @@
 
 import { useEffect, useState, useCallback } from 'react';
 import { useParams } from 'next/navigation';
-import { RotateCcw, ArrowLeft } from 'lucide-react';
+import { RotateCcw } from 'lucide-react';
 import Link from 'next/link';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -198,16 +198,6 @@ export default function DocumentPage() {
         lastSynced={lastSynced}
       />
 
-      {/* Breadcrumb link */}
-      <div className="pt-2">
-        <Link 
-          href="/dashboard/documents" 
-          className="inline-flex items-center gap-1.5 text-xs font-semibold text-muted-foreground/80 hover:text-primary transition-colors group"
-        >
-          <ArrowLeft className="h-3.5 w-3.5 transition-transform group-hover:-translate-x-0.5" />
-          Back to Documents
-        </Link>
-      </div>
 
       {/* Document header */}
       <div className="mb-6">
