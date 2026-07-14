@@ -158,7 +158,7 @@ export function TopHeader() {
             <ChevronDown className="h-3.5 w-3.5 text-muted-foreground" />
           </Button>
         </DropdownMenuTrigger>
-        <DropdownMenuContent align="end" className="w-52">
+        <DropdownMenuContent align="end" className="w-52 p-1 bg-white dark:bg-zinc-950 border border-border/80 shadow-md rounded-lg opacity-100">
           <DropdownMenuLabel>
             <div className="flex flex-col">
               <span className="font-medium">{user?.name}</span>

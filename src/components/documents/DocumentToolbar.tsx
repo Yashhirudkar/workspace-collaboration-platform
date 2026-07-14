@@ -1,8 +1,8 @@
 "use client";
 
 import React, { useState, useEffect, useCallback } from 'react';
-import { 
-  Star, Pin, Copy, Tag as TagIcon, Download, Trash2, 
+import {
+  Star, Pin, Copy, Tag as TagIcon, Download, Trash2,
   Clock, Share2, Loader2, Wifi, WifiOff, Plus
 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
@@ -43,7 +43,7 @@ export function DocumentToolbar({
   const [isFavorite, setIsFavorite] = useState(doc.isFavorite || false);
   const [isPinned, setIsPinned] = useState(doc.isPinned || false);
   const [docTags, setDocTags] = useState<Tag[]>(doc.tags || []);
-  
+
   // Tag manager states
   const [globalTags, setGlobalTags] = useState<Tag[]>([]);
   const [newTagName, setNewTagName] = useState('');
@@ -138,11 +138,11 @@ export function DocumentToolbar({
       try {
         setNewTagName('');
         const createdTag = await documentService.createTag(name);
-        
+
         // Append to local doc tags
         setDocTags(prev => [...prev, createdTag]);
         await documentService.addTag(doc.id, createdTag.id);
-        
+
         // Refresh global tags dropdown
         setGlobalTags(prev => [...prev, createdTag]);
         toast({ title: `Created and added tag #${name}` });
@@ -170,21 +170,21 @@ export function DocumentToolbar({
   const handleExport = async (format: 'html' | 'markdown' | 'pdf') => {
     try {
       setIsExporting(format);
-      
+
       // Request file download from server using standard raw axios to retrieve the stream/blob
-      const response = await api.get(`/documents/${doc.id}/export/${format}`, { 
-        responseType: 'blob' 
+      const response = await api.get(`/documents/${doc.id}/export/${format}`, {
+        responseType: 'blob'
       });
-      
-      const blob = new Blob([response.data], { 
-        type: (response.headers['content-type'] as string) || 'application/octet-stream' 
+
+      const blob = new Blob([response.data], {
+        type: (response.headers['content-type'] as string) || 'application/octet-stream'
       });
       const url = window.URL.createObjectURL(blob);
-      
+
       const contentDisposition = (response.headers['content-disposition'] as string) || '';
       const filenameMatch = contentDisposition.match(/filename="?([^"]+)"?/);
       const filename = filenameMatch ? filenameMatch[1] : `export-${doc.id}.${format === 'markdown' ? 'md' : format}`;
-      
+
       const link = window.document.createElement('a');
       link.href = url;
       link.setAttribute('download', filename);
@@ -192,7 +192,7 @@ export function DocumentToolbar({
       link.click();
       link.parentNode?.removeChild(link);
       window.URL.revokeObjectURL(url);
-      
+
       toast({ title: `Exported successfully as ${format.toUpperCase()}` });
     } catch (err) {
       console.error(err);
@@ -215,7 +215,7 @@ export function DocumentToolbar({
 
   return (
     <div className="flex flex-wrap items-center justify-between gap-4 py-2 px-3 border border-border/80 rounded-xl bg-card/60 backdrop-blur-xs select-none">
-      
+
       {/* ─── LEFT PANEL ACTIONS ─── */}
       <div className="flex flex-wrap items-center gap-1.5">
         {/* Favorite Star Button */}
@@ -260,7 +260,7 @@ export function DocumentToolbar({
           <DropdownMenuContent align="start" className="w-56 p-1">
             <DropdownMenuLabel className="text-[10px] uppercase tracking-wider text-muted-foreground">Document Tags</DropdownMenuLabel>
             <DropdownMenuSeparator />
-            
+
             <div className="max-h-48 overflow-y-auto p-1 space-y-0.5">
               {isTagsLoading ? (
                 <div className="flex items-center justify-center p-4">
@@ -315,7 +315,7 @@ export function DocumentToolbar({
             <Dialog.Content className="fixed top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 bg-card border border-border/80 rounded-xl p-5 w-full max-w-sm shadow-xl z-50 animate-in fade-in zoom-in-95 duration-150">
               <h2 className="text-sm font-bold text-foreground">Duplicate Document</h2>
               <p className="text-xs text-muted-foreground mt-1">This will create a copy of this document with its content and tags.</p>
-              
+
               <div className="flex items-center gap-2 mt-4">
                 <input
                   type="checkbox"
@@ -372,7 +372,7 @@ export function DocumentToolbar({
                 <span className="text-[9px] bg-muted px-1 py-0.5 rounded text-muted-foreground">PDF</span>
               )}
             </DropdownMenuItem>
-            
+
             <DropdownMenuItem
               onClick={() => handleExport('markdown')}
               disabled={isExporting !== null}
@@ -385,7 +385,7 @@ export function DocumentToolbar({
                 <span className="text-[9px] bg-muted px-1 py-0.5 rounded text-muted-foreground">MD</span>
               )}
             </DropdownMenuItem>
-            
+
             <DropdownMenuItem
               onClick={() => handleExport('html')}
               disabled={isExporting !== null}
@@ -417,7 +417,7 @@ export function DocumentToolbar({
 
       {/* ─── RIGHT PANEL SYNC STATUS ─── */}
       <div className="flex items-center gap-3 text-xs select-none">
-        
+
         {/* Autosave sync info message */}
         <span className="text-muted-foreground font-medium flex items-center gap-1.5">
           {saveStatus === 'saving' && (
@@ -467,7 +467,7 @@ export function DocumentToolbar({
           className="h-7 text-[10px] gap-1 px-2 shrink-0 border-amber-200 text-amber-700 bg-amber-50 hover:bg-amber-100 hover:text-amber-800 rounded-lg"
         >
           <Clock className="h-3.5 w-3.5" />
-          <span className="hidden sm:inline">History</span>
+          <span className=" sm:inline">History</span>
         </Button>
       </div>
 
