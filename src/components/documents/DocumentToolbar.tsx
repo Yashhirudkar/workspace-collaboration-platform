@@ -440,23 +440,21 @@ export function DocumentToolbar({
         <div className="h-3 w-[1px] bg-border" />
 
         {/* Real-time WebSockets connection latency badge */}
-        <div className="flex items-center gap-1 pl-1">
+        <div className="flex items-center gap-1.5 pl-1.5">
           {connectionState === 'connected' ? (
             <span className="flex items-center gap-1 text-green-600 font-medium" title="WebSocket connected">
               <Wifi className="h-3.5 w-3.5" />
-              <span className="hidden sm:inline">Connected</span> {latency !== null && `(${latency}ms)`}
+              Connected {latency !== null && `(${latency}ms)`}
             </span>
           ) : connectionState === 'reconnecting' ? (
             <span className="flex items-center gap-1 text-yellow-600 font-medium animate-pulse">
               <Wifi className="h-3.5 w-3.5" />
-              <span className="hidden sm:inline">Connecting...</span>
-              <span className="inline sm:hidden text-[9px]">Reconnecting</span>
+              Connecting...
             </span>
           ) : (
-            <span className="flex items-center gap-1 text-amber-600 font-medium" title="Offline Mode">
+            <span className="flex items-center gap-1 text-amber-600 font-medium">
               <WifiOff className="h-3.5 w-3.5" />
-              <span className="hidden sm:inline">Offline Mode</span>
-              <span className="inline sm:hidden text-[9px]">Offline</span>
+              Offline Mode
             </span>
           )}
         </div>
