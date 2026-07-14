@@ -2,7 +2,7 @@
 
 import { useEffect, useState, useCallback } from 'react';
 import { useParams } from 'next/navigation';
-import { RotateCcw } from 'lucide-react';
+import { RotateCcw, ArrowLeft } from 'lucide-react';
 import Link from 'next/link';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -200,7 +200,12 @@ export default function DocumentPage() {
 
       {/* Document header */}
       <div className="mb-6">
-        <div className="flex items-start gap-3">
+        <div className="flex items-center gap-3">
+          <Link href="/dashboard/documents" passHref>
+            <Button variant="ghost" size="icon" className="h-9 w-9 rounded-full border border-border/45 hover:bg-muted shrink-0" aria-label="Go Back">
+              <ArrowLeft className="h-4.5 w-4.5" />
+            </Button>
+          </Link>
           <Input
             id="doc-title-input"
             value={title}
