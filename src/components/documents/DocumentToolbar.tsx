@@ -1,6 +1,7 @@
 "use client";
 
 import React, { useState, useEffect, useCallback } from 'react';
+import { useRouter } from 'next/navigation';
 import {
   Star, Pin, Copy, Tag as TagIcon, Download, Trash2,
   Clock, Share2, Loader2, Wifi, WifiOff, Plus
@@ -40,6 +41,7 @@ export function DocumentToolbar({
   onHistoryOpen,
   lastSynced
 }: DocumentToolbarProps) {
+  const router = useRouter();
   const [isFavorite, setIsFavorite] = useState(doc.isFavorite || false);
   const [isPinned, setIsPinned] = useState(doc.isPinned || false);
   const [docTags, setDocTags] = useState<Tag[]>(doc.tags || []);
@@ -159,7 +161,7 @@ export function DocumentToolbar({
       toast({ title: 'Document duplicated successfully' });
       setDupOpen(false);
       // Navigate to the duplicate document
-      window.location.href = `/dashboard/documents/${copyDoc.id}`;
+      router.push(`/dashboard/documents/${copyDoc.id}`);
     } catch {
       toast({ title: 'Failed to duplicate document', variant: 'destructive' });
     } finally {
@@ -207,7 +209,7 @@ export function DocumentToolbar({
     try {
       await documentService.delete(doc.id);
       toast({ title: 'Moved to trash bin' });
-      window.location.href = '/dashboard';
+      router.push('/dashboard');
     } catch {
       toast({ title: 'Failed to move document to trash', variant: 'destructive' });
     }

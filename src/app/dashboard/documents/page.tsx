@@ -1,6 +1,7 @@
 "use client";
 
 import { useEffect, useState, useCallback, useRef } from 'react';
+import { useRouter } from 'next/navigation';
 import {
   Plus, FileText, Search, MoreHorizontal, Trash2, Edit3,
   Star, Pin, Copy, Tag as TagIcon, ArrowUpDown, SlidersHorizontal,
@@ -40,6 +41,7 @@ function DocumentSkeleton() {
 
 export default function DocumentsPage() {
   const { user } = useAuth();
+  const router = useRouter();
   const [documents, setDocuments] = useState<Document[]>([]);
   const [isLoading, setIsLoading] = useState(true);
   const [viewMode, setViewMode] = useState<'list' | 'grid'>('list');
@@ -198,7 +200,16 @@ export default function DocumentsPage() {
       const copyDoc = await documentService.duplicate(selectedDocForDup.id, copyCollabs);
       toast({ title: 'Document duplicated' });
       setDupOpen(false);
-      window.location.href = `/dashboard/documents/${copyDoc.id}`;
+      setDocuments(prev => {
+        const updated = [copyDoc, ...prev];
+        // Re-sort to keep pinned items at top
+        return updated.sort((a, b) => {
+          const aPinned = a.isPinned ? 1 : 0;
+          const bPinned = b.isPinned ? 1 : 0;
+          if (aPinned !== bPinned) return bPinned - aPinned;
+          return new Date(b.updatedAt).getTime() - new Date(a.updatedAt).getTime();
+        });
+      });
     } catch {
       toast({ title: 'Failed to duplicate document', variant: 'destructive' });
     } finally {
@@ -412,7 +423,7 @@ export default function DocumentsPage() {
                     key={doc.id}
                     onContextMenu={(e) => handleContextMenu(e, doc)}
                     className="group flex flex-col justify-between p-5 h-44 hover:shadow-md transition-all cursor-pointer bg-card/45 hover:bg-card border-border/80 relative rounded-xl"
-                    onClick={() => window.location.href = `/dashboard/documents/${doc.id}`}
+                    onClick={() => router.push(`/dashboard/documents/${doc.id}`)}
                   >
                     {/* Top Row: File icon and actions dropdown */}
                     <div className="flex items-center justify-between w-full">
@@ -474,7 +485,7 @@ export default function DocumentsPage() {
                   key={doc.id}
                   onContextMenu={(e) => handleContextMenu(e, doc)}
                   className="group flex items-center gap-4 p-4 hover:shadow-md transition-all cursor-pointer bg-card/45 hover:bg-card border-border/80 relative"
-                  onClick={() => window.location.href = `/dashboard/documents/${doc.id}`}
+                  onClick={() => router.push(`/dashboard/documents/${doc.id}`)}
                 >
                   {/* File Icon */}
                   <div className="w-9 h-9 bg-primary/10 text-primary rounded-lg flex items-center justify-center shrink-0">
@@ -537,7 +548,7 @@ export default function DocumentsPage() {
             {contextMenu.document.title}
           </div>
           <button
-            onClick={() => window.location.href = `/dashboard/documents/${contextMenu.document.id}`}
+            onClick={() => router.push(`/dashboard/documents/${contextMenu.document.id}`)}
             className="flex items-center w-full gap-2 px-2 py-1.5 text-xs text-left rounded hover:bg-muted/80 text-foreground transition-colors"
           >
             <Edit3 className="h-3.5 w-3.5 text-muted-foreground" /> Open Workspace
@@ -625,7 +636,7 @@ export default function DocumentsPage() {
         onCreated={(doc) => {
           setDocuments(prev => [doc, ...prev]);
           setIsCreateOpen(false);
-          window.location.href = `/dashboard/documents/${doc.id}`;
+          router.push(`/dashboard/documents/${doc.id}`);
         }}
       />
     </>

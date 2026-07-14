@@ -1,6 +1,7 @@
 "use client";
 
 import { useEffect, useState, useCallback } from 'react';
+import { useRouter } from 'next/navigation';
 import { 
   Plus, FileText, LayoutDashboard, User as UserIcon, Mail, 
   Sparkles, FolderOpen, ArrowRight, Star, Pin, Database, 
@@ -23,6 +24,7 @@ function formatDate(dateStr: string) {
 
 export default function DashboardPage() {
   const { user } = useAuth();
+  const router = useRouter();
   const isOnline = useNetworkStatus();
   const [documents, setDocuments] = useState<Document[]>([]);
   const [favorites, setFavorites] = useState<Document[]>([]);
@@ -214,7 +216,7 @@ export default function DashboardPage() {
 
           <Card 
             className="p-4 flex items-center gap-4 hover:bg-muted/30 cursor-pointer transition-colors border-dashed border-2 bg-card/10"
-            onClick={() => window.location.href = '/dashboard/favorites'}
+            onClick={() => router.push('/dashboard/favorites')}
           >
             <div className="h-10 w-10 bg-amber-500/5 rounded-lg flex items-center justify-center text-amber-500 border shrink-0">
               <Star className="h-5 w-5 fill-amber-500/10" />
@@ -227,7 +229,7 @@ export default function DashboardPage() {
 
           <Card 
             className="p-4 flex items-center gap-4 hover:bg-muted/30 cursor-pointer transition-colors border-dashed border-2 bg-card/10"
-            onClick={() => window.location.href = '/dashboard/trash'}
+            onClick={() => router.push('/dashboard/trash')}
           >
             <div className="h-10 w-10 bg-destructive/5 rounded-lg flex items-center justify-center text-destructive border shrink-0">
               <Trash2 className="h-5 w-5" />
@@ -313,7 +315,7 @@ export default function DashboardPage() {
         onClose={() => setIsCreateOpen(false)}
         onCreated={(doc) => {
           setIsCreateOpen(false);
-          window.location.href = `/dashboard/documents/${doc.id}`;
+          router.push(`/dashboard/documents/${doc.id}`);
         }}
       />
     </>
