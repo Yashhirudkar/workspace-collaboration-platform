@@ -11,6 +11,7 @@ import { cn } from '@/lib/utils';
 import { documentService } from '@/services/documents';
 import type { Document, Tag } from '@/types';
 import { toast } from '@/hooks/useToast';
+import { useWorkspace } from '@/hooks/useWorkspace';
 
 const navItems = [
   { label: 'Dashboard', href: '/dashboard', icon: LayoutDashboard, exact: true },
@@ -42,10 +43,50 @@ export function Sidebar() {
 
   useEffect(() => {
     loadSidebarData();
-    // Poll or listen to refresh sidebar periodically for real-time responsiveness
-    const interval = setInterval(loadSidebarData, 8000);
-    return () => clearInterval(interval);
+    // No setInterval — real-time updates come via socket events below
   }, [loadSidebarData]);
+
+  // ── Real-time workspace event subscriptions ────────────────────────────────
+  useWorkspace({
+    onDocumentCreated: ({ document }) => {
+      // New docs don't automatically become favorites — no sidebar change needed
+    },
+    onDocumentDeleted: ({ documentId }) => {
+      // Remove from favorites if it was there
+      setFavorites(prev => prev.filter(d => d.id !== documentId));
+    },
+    onDocumentPermanentlyDeleted: ({ documentId }) => {
+      setFavorites(prev => prev.filter(d => d.id !== documentId));
+    },
+    onDocumentRestored: ({ document }) => {
+      // If it was previously favorited, it will show up again on next explicit load
+      // (no optimistic add here since we don't know if it was favorited before trash)
+    },
+    onDocumentFavorited: ({ documentId, isFavorite }) => {
+      if (isFavorite) {
+        // Fetch the full doc to add to sidebar favorites list
+        documentService.get(documentId).then(doc => {
+          setFavorites(prev => {
+            if (prev.some(d => d.id === documentId)) return prev;
+            return [...prev, doc];
+          });
+        }).catch(() => {});
+      } else {
+        setFavorites(prev => prev.filter(d => d.id !== documentId));
+      }
+    },
+    onDocumentUpdated: ({ documentId, changes }) => {
+      if (changes.title) {
+        setFavorites(prev => prev.map(d => d.id === documentId ? { ...d, title: changes.title! } : d));
+      }
+    },
+    onDocumentTagAdded: ({ tag }) => {
+      setTags(prev => {
+        if (prev.some(t => t.id === tag.id)) return prev;
+        return [...prev, tag];
+      });
+    },
+  });
 
   return (
     <aside

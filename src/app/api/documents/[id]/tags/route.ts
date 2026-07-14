@@ -7,7 +7,9 @@ import { DOCUMENT_ROLES } from '@/constants/roles';
 import { errorResponse } from '@/utils/response';
 import Document from '@/models/Document';
 import DocumentTag from '@/models/DocumentTag';
+import Tag from '@/models/Tag';
 import { initDatabase } from '@/config/database';
+import { emitToUser } from '@/services/socket.service';
 
 const addTagSchema = z.object({
   tagId: z.string().uuid('Invalid tag ID'),
@@ -19,50 +21,13 @@ const routeContextSchema = z.object({
   }),
 });
 
-/**
- * @swagger
- * /api/documents/{id}/tags:
- *   post:
- *     summary: Add a tag to a document
- *     tags: [Tags]
- *     security:
- *       - BearerAuth: []
- *     parameters:
- *       - name: id
- *         in: path
- *         required: true
- *         schema: { type: string, format: uuid }
- *     requestBody:
- *       required: true
- *       content:
- *         application/json:
- *           schema:
- *             type: object
- *             required: [tagId]
- *             properties:
- *               tagId:
- *                 type: string
- *                 format: uuid
- *     responses:
- *       200:
- *         description: Tag added to document.
- *       400:
- *         description: Validation error.
- *       401:
- *         description: Unauthorized.
- *       403:
- *         description: Forbidden – requires OWNER or EDITOR role.
- *       404:
- *         description: Document not found.
- */
 export async function POST(request: NextRequest, context: unknown) {
   try {
     await initDatabase();
-    getUserIdFromRequest(request);
+    const userId = getUserIdFromRequest(request);
 
     const { params } = routeContextSchema.parse(context);
 
-    // BOLA fix: only OWNER or EDITOR may add tags
     await checkDocumentRole(request, params.id, [
       DOCUMENT_ROLES.OWNER,
       DOCUMENT_ROLES.EDITOR,
@@ -81,6 +46,15 @@ export async function POST(request: NextRequest, context: unknown) {
 
     await DocumentTag.findOrCreate({
       where: { documentId: params.id, tagId },
+    });
+
+    // Fetch tag data to include in broadcast
+    const tag = await Tag.findByPk(tagId);
+
+    // Real-time: tag addition propagates to all tabs
+    emitToUser(userId, 'workspace:document-tag-added', {
+      documentId: params.id,
+      tag: tag ? { id: tag.id, name: (tag as any).name, createdAt: (tag as any).createdAt, updatedAt: (tag as any).updatedAt } : { id: tagId, name: '' },
     });
 
     return NextResponse.json({ success: true });

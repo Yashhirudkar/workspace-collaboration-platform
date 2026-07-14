@@ -9,6 +9,7 @@ import { documentService } from '@/services/documents';
 import { toast } from '@/hooks/useToast';
 import type { Document } from '@/types';
 import Link from 'next/link';
+import { useWorkspace } from '@/hooks/useWorkspace';
 
 function formatDate(dateStr: string) {
   return new Intl.DateTimeFormat('en-US', { month: 'short', day: 'numeric', hour: '2-digit', minute: '2-digit' }).format(new Date(dateStr));
@@ -34,6 +35,27 @@ export default function TrashPage() {
   useEffect(() => {
     loadTrash();
   }, [loadTrash]);
+
+  // ── Real-time workspace event subscriptions ──────────────────────────────
+  useWorkspace({
+    onDocumentDeleted: ({ documentId }) => {
+      // A new document was soft-deleted — fetch it and add to trash list
+      documentService.getTrash().then(docs => {
+        const deleted = docs.find(d => d.id === documentId);
+        if (deleted) {
+          setTrash(prev => prev.some(d => d.id === documentId) ? prev : [deleted, ...prev]);
+        }
+      }).catch(() => {});
+    },
+    onDocumentRestored: ({ document }) => {
+      // Restored document leaves the trash
+      setTrash(prev => prev.filter(d => d.id !== document.id));
+    },
+    onDocumentPermanentlyDeleted: ({ documentId }) => {
+      // Permanently deleted — remove from trash list
+      setTrash(prev => prev.filter(d => d.id !== documentId));
+    },
+  });
 
   const handleRestore = async (id: string, title: string) => {
     try {

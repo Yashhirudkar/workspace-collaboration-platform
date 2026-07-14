@@ -40,7 +40,7 @@ export function usePresence(socket: Socket | null, documentId: string) {
     if (!socket || !documentId) return;
 
     // Listeners
-    const onUserJoined = (data: { userId: string; name?: string }) => {
+    const onUserJoined = (data: { userId: string; name?: string }) => { // presence:joined
       const uName = data.name || 'Anonymous Editor';
       setCollaborators((prev) => ({
         ...prev,
@@ -107,13 +107,13 @@ export function usePresence(socket: Socket | null, documentId: string) {
       });
     };
 
-    socket.on('user-joined', onUserJoined);
-    socket.on('user-left', onUserLeft);
+    socket.on('presence:joined', onUserJoined);
+    socket.on('presence:left', onUserLeft);
     socket.on('cursor-update', onCursorUpdate);
 
     return () => {
-      socket.off('user-joined', onUserJoined);
-      socket.off('user-left', onUserLeft);
+      socket.off('presence:joined', onUserJoined);
+      socket.off('presence:left', onUserLeft);
       socket.off('cursor-update', onCursorUpdate);
     };
   }, [socket, documentId, user]);

@@ -6,16 +6,20 @@ import { successResponse, errorResponse } from '@/utils/response';
 import { initDatabase } from '@/config/database';
 import { checkDocumentRole } from '@/middleware/roles';
 import { DOCUMENT_ROLES } from '@/constants/roles';
+import { emitToUser } from '@/services/socket.service';
 
 export async function POST(req: NextRequest, { params }: { params: { id: string } }) {
   try {
     await initDatabase();
     const userId = getUserIdFromRequest(req);
     
-    // Only OWNER can restore
     await checkDocumentRole(req, params.id, [DOCUMENT_ROLES.OWNER]);
 
     const restoredDoc = await DocumentService.restoreDocument(userId, params.id);
+
+    // Real-time: document re-appears in document list and disappears from trash
+    emitToUser(userId, 'workspace:document-restored', { document: restoredDoc });
+
     return successResponse(restoredDoc, 'Document restored successfully');
   } catch (error) {
     return errorResponse(error);

@@ -7,8 +7,8 @@ import { errorResponse } from '@/utils/response';
 import { z } from 'zod';
 import Document from '@/models/Document';
 import FavoriteDocument from '@/models/FavoriteDocument';
-
 import { initDatabase } from '@/config/database';
+import { emitToUser } from '@/services/socket.service';
 
 const routeContextSchema = z.object({
   params: z.object({
@@ -28,7 +28,6 @@ export async function POST(request: NextRequest, context: unknown) {
       DOCUMENT_ROLES.VIEWER
     ]);
 
-    // Verify document exists and is not deleted
     const document = await Document.findOne({
       where: { id: params.id, deletedAt: null },
     });
@@ -38,11 +37,11 @@ export async function POST(request: NextRequest, context: unknown) {
     }
 
     await FavoriteDocument.findOrCreate({
-      where: {
-        userId,
-        documentId: params.id,
-      },
+      where: { userId, documentId: params.id },
     });
+
+    // Real-time: favorite state change propagates to all user tabs
+    emitToUser(userId, 'workspace:document-favorited', { documentId: params.id, isFavorite: true });
 
     return NextResponse.json({ success: true });
   } catch (error) {
@@ -63,11 +62,11 @@ export async function DELETE(request: NextRequest, context: unknown) {
     ]);
 
     await FavoriteDocument.destroy({
-      where: {
-        userId,
-        documentId: params.id,
-      },
+      where: { userId, documentId: params.id },
     });
+
+    // Real-time: unfavorite propagates to all user tabs
+    emitToUser(userId, 'workspace:document-favorited', { documentId: params.id, isFavorite: false });
 
     return NextResponse.json({ success: true });
   } catch (error) {

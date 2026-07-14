@@ -17,6 +17,7 @@ import { useNetworkStatus } from '@/hooks/useNetworkStatus';
 import type { Document } from '@/types';
 import { CreateDocumentModal } from '@/components/documents/CreateDocumentModal';
 import Link from 'next/link';
+import { useWorkspace } from '@/hooks/useWorkspace';
 
 function formatDate(dateStr: string) {
   return new Intl.DateTimeFormat('en-US', { month: 'short', day: 'numeric', hour: '2-digit', minute: '2-digit' }).format(new Date(dateStr));
@@ -69,6 +70,58 @@ export default function DashboardPage() {
   useEffect(() => {
     loadDashboardData();
   }, [loadDashboardData]);
+
+  // ── Real-time workspace event subscriptions ──────────────────────────────
+  useWorkspace({
+    onDocumentCreated: ({ document }) => {
+      setDocuments(prev => [document, ...prev]);
+      setRecent(prev => [document, ...prev.slice(0, 19)]);
+    },
+    onDocumentDeleted: ({ documentId }) => {
+      setDocuments(prev => prev.filter(d => d.id !== documentId));
+      setFavorites(prev => prev.filter(d => d.id !== documentId));
+      setPinned(prev => prev.filter(d => d.id !== documentId));
+      setRecent(prev => prev.filter(d => d.id !== documentId));
+    },
+    onDocumentPermanentlyDeleted: ({ documentId }) => {
+      setDocuments(prev => prev.filter(d => d.id !== documentId));
+      setFavorites(prev => prev.filter(d => d.id !== documentId));
+      setPinned(prev => prev.filter(d => d.id !== documentId));
+      setRecent(prev => prev.filter(d => d.id !== documentId));
+    },
+    onDocumentRestored: ({ document }) => {
+      setDocuments(prev => {
+        if (prev.some(d => d.id === document.id)) return prev;
+        return [document, ...prev];
+      });
+    },
+    onDocumentUpdated: ({ documentId, changes }) => {
+      const applyChanges = (d: Document) =>
+        d.id === documentId ? { ...d, ...changes } : d;
+      setDocuments(prev => prev.map(applyChanges));
+      setFavorites(prev => prev.map(applyChanges));
+      setPinned(prev => prev.map(applyChanges));
+      setRecent(prev => prev.map(applyChanges));
+    },
+    onDocumentFavorited: ({ documentId, isFavorite }) => {
+      setDocuments(prev => prev.map(d => d.id === documentId ? { ...d, isFavorite } : d));
+      if (isFavorite) {
+        const doc = documents.find(d => d.id === documentId);
+        if (doc) setFavorites(prev => prev.some(d => d.id === documentId) ? prev : [...prev, { ...doc, isFavorite: true }]);
+      } else {
+        setFavorites(prev => prev.filter(d => d.id !== documentId));
+      }
+    },
+    onDocumentPinned: ({ documentId, isPinned }) => {
+      setDocuments(prev => prev.map(d => d.id === documentId ? { ...d, isPinned } : d));
+      if (isPinned) {
+        const doc = documents.find(d => d.id === documentId);
+        if (doc) setPinned(prev => prev.some(d => d.id === documentId) ? prev : [...prev, { ...doc, isPinned: true }]);
+      } else {
+        setPinned(prev => prev.filter(d => d.id !== documentId));
+      }
+    },
+  });
 
   // Group Recent Documents by chronological age segments
   const getGroupedRecent = () => {

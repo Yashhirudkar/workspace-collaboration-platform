@@ -22,6 +22,7 @@ import { useAuth } from '@/contexts/AuthContext';
 import type { Document, Tag } from '@/types';
 import { CreateDocumentModal } from '@/components/documents/CreateDocumentModal';
 import Link from 'next/link';
+import { useWorkspace } from '@/hooks/useWorkspace';
 
 function formatDate(dateStr: string) {
   return new Intl.DateTimeFormat('en-US', { month: 'short', day: 'numeric', year: 'numeric' }).format(new Date(dateStr));
@@ -120,6 +121,72 @@ export default function DocumentsPage() {
   useEffect(() => {
     loadDocuments();
   }, [loadDocuments]);
+
+  // ── Real-time workspace event subscriptions ──────────────────────────────
+  useWorkspace({
+    onDocumentCreated: ({ document }) => {
+      setDocuments(prev => {
+        if (prev.some(d => d.id === document.id)) return prev;
+        // Insert new doc and re-sort: pinned first, then by date DESC
+        const updated = [document, ...prev];
+        return updated.sort((a, b) => {
+          const ap = a.isPinned ? 1 : 0;
+          const bp = b.isPinned ? 1 : 0;
+          if (ap !== bp) return bp - ap;
+          return new Date(b.updatedAt).getTime() - new Date(a.updatedAt).getTime();
+        });
+      });
+    },
+    onDocumentDeleted: ({ documentId }) => {
+      setDocuments(prev => prev.filter(d => d.id !== documentId));
+    },
+    onDocumentPermanentlyDeleted: ({ documentId }) => {
+      setDocuments(prev => prev.filter(d => d.id !== documentId));
+    },
+    onDocumentRestored: ({ document }) => {
+      setDocuments(prev => {
+        if (prev.some(d => d.id === document.id)) return prev;
+        return [document, ...prev].sort((a, b) => {
+          const ap = a.isPinned ? 1 : 0;
+          const bp = b.isPinned ? 1 : 0;
+          if (ap !== bp) return bp - ap;
+          return new Date(b.updatedAt).getTime() - new Date(a.updatedAt).getTime();
+        });
+      });
+    },
+    onDocumentUpdated: ({ documentId, changes }) => {
+      setDocuments(prev => prev.map(d => d.id === documentId ? { ...d, ...changes } : d));
+    },
+    onDocumentFavorited: ({ documentId, isFavorite }) => {
+      setDocuments(prev => prev.map(d => d.id === documentId ? { ...d, isFavorite } : d));
+    },
+    onDocumentPinned: ({ documentId, isPinned }) => {
+      setDocuments(prev => {
+        const updated = prev.map(d => d.id === documentId ? { ...d, isPinned } : d);
+        return updated.sort((a, b) => {
+          const ap = a.isPinned ? 1 : 0;
+          const bp = b.isPinned ? 1 : 0;
+          if (ap !== bp) return bp - ap;
+          return new Date(b.updatedAt).getTime() - new Date(a.updatedAt).getTime();
+        });
+      });
+    },
+    onDocumentTagAdded: ({ documentId, tag }) => {
+      setDocuments(prev => prev.map(d =>
+        d.id === documentId
+          ? { ...d, tags: d.tags ? (d.tags.some(t => t.id === tag.id) ? d.tags : [...d.tags, tag]) : [tag] }
+          : d
+      ));
+      setGlobalTags(prev => prev.some(t => t.id === tag.id) ? prev : [...prev, tag]);
+    },
+    onDocumentTagRemoved: ({ documentId, tagId }) => {
+      setDocuments(prev => prev.map(d =>
+        d.id === documentId
+          ? { ...d, tags: d.tags ? d.tags.filter(t => t.id !== tagId) : [] }
+          : d
+      ));
+    },
+  });
 
   // Context Menu handlers
   const handleContextMenu = (e: React.MouseEvent, doc: Document) => {

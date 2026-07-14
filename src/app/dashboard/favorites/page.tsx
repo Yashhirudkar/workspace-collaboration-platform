@@ -8,6 +8,7 @@ import { documentService } from '@/services/documents';
 import { toast } from '@/hooks/useToast';
 import type { Document } from '@/types';
 import Link from 'next/link';
+import { useWorkspace } from '@/hooks/useWorkspace';
 
 function formatDate(dateStr: string) {
   return new Intl.DateTimeFormat('en-US', { month: 'short', day: 'numeric', year: 'numeric' }).format(new Date(dateStr));
@@ -32,6 +33,28 @@ export default function FavoritesPage() {
   useEffect(() => {
     loadFavorites();
   }, [loadFavorites]);
+
+  // ── Real-time workspace event subscriptions ──────────────────────────────
+  useWorkspace({
+    onDocumentFavorited: ({ documentId, isFavorite }) => {
+      if (isFavorite) {
+        documentService.get(documentId).then(doc => {
+          setFavorites(prev => prev.some(d => d.id === documentId) ? prev : [doc, ...prev]);
+        }).catch(() => {});
+      } else {
+        setFavorites(prev => prev.filter(d => d.id !== documentId));
+      }
+    },
+    onDocumentDeleted: ({ documentId }) => {
+      setFavorites(prev => prev.filter(d => d.id !== documentId));
+    },
+    onDocumentPermanentlyDeleted: ({ documentId }) => {
+      setFavorites(prev => prev.filter(d => d.id !== documentId));
+    },
+    onDocumentUpdated: ({ documentId, changes }) => {
+      setFavorites(prev => prev.map(d => d.id === documentId ? { ...d, ...changes } : d));
+    },
+  });
 
   const handleUnfavorite = async (id: string, e: React.MouseEvent) => {
     e.stopPropagation();

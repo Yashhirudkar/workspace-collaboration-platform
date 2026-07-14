@@ -6,6 +6,7 @@ import { successResponse, errorResponse } from '@/utils/response';
 import { initDatabase } from '@/config/database';
 import { getUserIdFromRequest } from '@/middleware/auth';
 import { HTTP_STATUS } from '@/constants/statusCodes';
+import { emitToUser } from '@/services/socket.service';
 
 export async function POST(req: NextRequest) {
   try {
@@ -16,6 +17,9 @@ export async function POST(req: NextRequest) {
     const validatedData = createDocumentSchema.parse(body);
     
     const document = await DocumentService.createDocument(userId, validatedData);
+    
+    // Real-time: broadcast new document to all tabs of this user
+    emitToUser(userId, 'workspace:document-created', { document });
     
     return successResponse(document, 'Document created successfully', HTTP_STATUS.CREATED);
   } catch (error) {
