@@ -1,3 +1,4 @@
+export const dynamic = 'force-dynamic';
 import { NextRequest } from 'next/server';
 import { pushOperationsSchema } from '@/schemas/sync.schema';
 import { SyncService } from '@/services/sync.service';

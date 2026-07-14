@@ -7,6 +7,9 @@ class Document extends Model {
   public content!: Record<string, unknown>;
   public createdBy!: string;
   public lastEditedBy!: string;
+  public deletedAt!: Date | null;
+  public deletedBy!: string | null;
+  public deletedReason!: string | null;
   public readonly createdAt!: Date;
   public readonly updatedAt!: Date;
 }
@@ -33,6 +36,18 @@ Document.init({
   lastEditedBy: {
     type: DataTypes.UUID,
     allowNull: false,
+  },
+  deletedAt: {
+    type: DataTypes.DATE,
+    allowNull: true,
+  },
+  deletedBy: {
+    type: DataTypes.UUID,
+    allowNull: true,
+  },
+  deletedReason: {
+    type: DataTypes.STRING,
+    allowNull: true,
   },
 }, {
   sequelize,

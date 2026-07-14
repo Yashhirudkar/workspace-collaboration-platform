@@ -1,3 +1,4 @@
+export const dynamic = 'force-dynamic';
 import { NextRequest } from 'next/server';
 import { SyncService } from '@/services/sync.service';
 import { successResponse, errorResponse } from '@/utils/response';

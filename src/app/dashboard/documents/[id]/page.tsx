@@ -2,7 +2,7 @@
 
 import { useEffect, useState, useCallback } from 'react';
 import { useParams } from 'next/navigation';
-import { ArrowLeft, Wifi, WifiOff, Clock, RotateCcw } from 'lucide-react';
+import { RotateCcw } from 'lucide-react';
 import Link from 'next/link';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -20,6 +20,7 @@ import { Editor } from '@/components/documents/Editor';
 import { PresenceBar } from '@/components/documents/PresenceBar';
 import { VersionHistoryDrawer } from '@/components/documents/VersionHistoryDrawer';
 import { RestoreDialog } from '@/components/documents/RestoreDialog';
+import { DocumentToolbar } from '@/components/documents/DocumentToolbar';
 import { toast } from '@/hooks/useToast';
 import type { Document, DocumentVersion } from '@/types';
 
@@ -89,6 +90,7 @@ export default function DocumentPage() {
       }
     }
     loadDocument();
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [id]);
 
   // 2. Network Sync: process sync queue when returning online
@@ -183,70 +185,18 @@ export default function DocumentPage() {
   const isViewer = document.role === 'VIEWER';
 
   return (
-    <div className="max-w-4xl mx-auto animate-fade-in relative">
-      {/* Top Navigation & Status Bar */}
-      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 mb-6 border-b pb-4">
-        <Link
-          href="/dashboard"
-          className="inline-flex items-center gap-1.5 text-sm text-muted-foreground hover:text-foreground transition-colors"
-        >
-          <ArrowLeft className="h-3.5 w-3.5" />
-          All Documents
-        </Link>
-
-        {/* Status Panel Indicators */}
-        <div className="flex flex-wrap items-center gap-4 text-xs">
-          {/* Active Collaborators */}
-          <PresenceBar collaborators={collaborators} />
-
-          <div className="h-3 w-[1px] bg-border hidden sm:block" />
-
-          {/* Sync Status Info */}
-          <span className="text-muted-foreground font-medium flex items-center gap-1">
-            {saveStatus === 'saving' && 'Saving...'}
-            {saveStatus === 'saved' && 'Saved'}
-            {saveStatus === 'offline' && 'Offline'}
-            {isSyncingQueue && 'Synced'}
-          </span>
-
-          {lastSynced && (
-            <span className="text-muted-foreground hidden md:inline">
-              Last sync: {new Date(lastSynced).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}
-            </span>
-          )}
-
-          {/* Connection Indicators */}
-          <div className="flex items-center gap-1.5 font-medium border-l pl-3">
-            {connectionState === 'connected' ? (
-              <span className="flex items-center gap-1 text-green-600">
-                <Wifi className="h-3.5 w-3.5" />
-                Realtime Connected {latency !== null && `(${latency}ms)`}
-              </span>
-            ) : connectionState === 'reconnecting' ? (
-              <span className="flex items-center gap-1 text-yellow-600 animate-pulse">
-                <Wifi className="h-3.5 w-3.5" />
-                Reconnecting...
-              </span>
-            ) : (
-              <span className="flex items-center gap-1 text-amber-600">
-                <WifiOff className="h-3.5 w-3.5" />
-                Offline
-              </span>
-            )}
-          </div>
-
-          {/* History Toggle Button */}
-          <Button
-            variant="outline"
-            size="sm"
-            onClick={() => setIsDrawerOpen(true)}
-            className="h-7 text-[10px] gap-1 px-2 shrink-0 border-amber-200 text-amber-700 bg-amber-50 hover:bg-amber-100 hover:text-amber-800"
-          >
-            <Clock className="h-3 w-3" />
-            History
-          </Button>
-        </div>
-      </div>
+    <div className="max-w-4xl mx-auto animate-fade-in relative space-y-4">
+      {/* Dynamic Document Toolbar */}
+      <DocumentToolbar
+        document={document}
+        onUpdate={setDocument}
+        saveStatus={saveStatus}
+        isSyncingQueue={isSyncingQueue}
+        connectionState={connectionState}
+        latency={latency}
+        onHistoryOpen={() => setIsDrawerOpen(true)}
+        lastSynced={lastSynced}
+      />
 
       {/* Document header */}
       <div className="mb-6">

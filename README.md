@@ -156,57 +156,87 @@ erDiagram
     Users ||--o{ DocumentCollaborators : "role access"
     Users ||--o{ Operations : "performs"
     Users ||--o{ DocumentVersions : "snapshots"
-    
+    Users ||--o{ FavoriteDocuments : "favorites"
+    Users ||--o{ PinnedDocuments : "pins"
+    Users ||--o{ UserDocumentActivity : "activity"
+
     Documents ||--o{ DocumentCollaborators : "has"
     Documents ||--o{ Operations : "logs"
     Documents ||--o{ DocumentVersions : "captures"
+    Documents ||--o{ FavoriteDocuments : "favorited by"
+    Documents ||--o{ PinnedDocuments : "pinned by"
+    Documents ||--o{ UserDocumentActivity : "tracked by"
+    Documents ||--o{ DocumentTags : "tagged with"
+
+    Tags ||--o{ DocumentTags : "applied to"
 ```
 
 ### Table Specifications
 
-1. **`users`**
-   - Stores account profiles and Bcrypt password hashes.
-   - Indexes: Primary key on `id`, unique constraint on `email`.
+1. **`users`** — Account profiles with bcrypt-hashed passwords. Unique index on `email`.
 
-2. **`documents`**
-   - Core document store. Content is mapped as JSONB type for ProseMirror schema storage.
-   - Indexes: Primary key on `id`, index on `createdBy`.
+2. **`documents`** — Core document store. JSONB `content` field maps TipTap/ProseMirror schema. Soft-delete fields: `deletedAt`, `deletedBy`, `deletedReason`. Index on `createdBy`.
 
-3. **`document_collaborators`**
-   - Mapping table for user document permissions (OWNER, EDITOR, VIEWER).
-   - Indexes: Composite unique index on `[userId, documentId]`.
+3. **`document_collaborators`** — RBAC junction table. Composite unique index on `[userId, documentId]`. Roles: `OWNER`, `EDITOR`, `VIEWER`.
 
-4. **`operations`**
-   - Logs modifications chronologically. Used to pull changes during client catch-up syncs.
-   - Indexes: Composite index on `[documentId, timestamp]`.
+4. **`operations`** — Chronological modification log for sync pull. Composite index on `[documentId, timestamp]`.
 
-5. **`document_versions`**
-   - Historical snapshots of document states.
-   - Indexes: Composite unique index on `[documentId, versionNumber]`.
+5. **`document_versions`** — Historical content snapshots. Composite unique index on `[documentId, versionNumber]`.
+
+6. **`favorite_documents`** — User-scoped favorites junction table. Composite unique index on `[userId, documentId]`. Enforces multi-tenant isolation (no global state leakage).
+
+7. **`pinned_documents`** — User-scoped pins junction table. Composite unique index on `[userId, documentId]`.
+
+8. **`user_document_activity`** — Per-user activity tracking. Columns: `lastOpenedAt`, `lastEditedAt`, `lastViewedAt`. Composite unique index on `[userId, documentId]`. Used for Recent Documents ordering.
+
+9. **`tags`** — Global tag registry. Unique constraint on `name` (normalised to lowercase). Prevents duplicates across the tag system.
+
+10. **`document_tags`** — Document-tag many-to-many junction table. Composite unique index on `[documentId, tagId]`.
 
 ---
 
 ## API Documentation
 
-| Method | Endpoint | Description | Auth Required |
-|---|---|---|---|
-| **GET** | `/api/health` | Service status check | No |
-| **POST** | `/api/auth/signup` | Register new user profile | No |
-| **POST** | `/api/auth/login` | Authenticate user credentials and return token | No |
-| **GET** | `/api/documents` | List documents available to the user | Yes |
-| **POST** | `/api/documents` | Create a new document | Yes |
-| **GET** | `/api/documents/{id}` | Fetch document details | Yes |
-| **PUT** | `/api/documents/{id}` | Save title / content modifications | Yes |
-| **DELETE** | `/api/documents/{id}` | Remove document from database | Yes |
-| **POST** | `/api/documents/{id}/sync/push` | Push offline operations queue | Yes |
-| **GET** | `/api/documents/{id}/sync/pull` | Pull server modifications since timestamp | Yes |
-| **GET** | `/api/documents/{id}/versions` | List version timeline | Yes |
-| **POST** | `/api/documents/{id}/versions` | Create manual snapshot | Yes |
-| **POST** | `/api/documents/{id}/versions/{versionId}` | Restore document to version snapshot | Yes |
+### Core Endpoints
 
-*Complete interactive API documentation is available via Swagger UI:*
-- **Swagger Documentation UI**: `/docs`
-- **Raw OpenAPI JSON Specifications**: `/api/openapi`
+| Method | Endpoint | Description | Auth | Min Role |
+|---|---|---|---|---|
+| `GET` | `/api/health` | Service health check | No | — |
+| `POST` | `/api/auth/signup` | Register user | No | — |
+| `POST` | `/api/auth/login` | Authenticate and get JWT | No | — |
+| `GET` | `/api/documents` | List accessible documents | Yes | VIEWER |
+| `POST` | `/api/documents` | Create document | Yes | — |
+| `GET` | `/api/documents/{id}` | Fetch document | Yes | VIEWER |
+| `PUT` | `/api/documents/{id}` | Update document | Yes | EDITOR |
+| `DELETE` | `/api/documents/{id}` | Soft-delete document | Yes | OWNER |
+| `POST` | `/api/documents/{id}/sync/push` | Push offline operations | Yes | EDITOR |
+| `GET` | `/api/documents/{id}/sync/pull` | Pull server changes | Yes | VIEWER |
+| `GET` | `/api/documents/{id}/versions` | List version history | Yes | VIEWER |
+| `POST` | `/api/documents/{id}/versions` | Create snapshot | Yes | EDITOR |
+| `POST` | `/api/documents/{id}/versions/{vId}` | Restore to snapshot | Yes | OWNER |
+
+### Phase 7A Productivity Endpoints
+
+| Method | Endpoint | Description | Auth | Min Role |
+|---|---|---|---|---|
+| `POST` | `/api/documents/{id}/favorite` | Favorite a document | Yes | VIEWER |
+| `DELETE` | `/api/documents/{id}/favorite` | Unfavorite a document | Yes | VIEWER |
+| `GET` | `/api/documents/favorites` | List favorites | Yes | — |
+| `POST` | `/api/documents/{id}/pin` | Pin a document | Yes | VIEWER |
+| `DELETE` | `/api/documents/{id}/pin` | Unpin a document | Yes | VIEWER |
+| `GET` | `/api/documents/pinned` | List pinned documents | Yes | — |
+| `GET` | `/api/documents/recent` | List recently opened documents | Yes | — |
+| `POST` | `/api/documents/{id}/duplicate` | Duplicate a document (with tags) | Yes | EDITOR |
+| `GET` | `/api/documents/trash` | List soft-deleted documents | Yes | — |
+| `POST` | `/api/documents/{id}/restore` | Restore from trash | Yes | OWNER |
+| `DELETE` | `/api/documents/{id}/permanent` | Hard-delete document | Yes | OWNER |
+| `GET` | `/api/tags` | List all global tags | Yes | — |
+| `POST` | `/api/tags` | Create a tag | Yes | — |
+| `POST` | `/api/documents/{id}/tags` | Add tag to document | Yes | EDITOR |
+| `DELETE` | `/api/documents/{id}/tags/{tagId}` | Remove tag from document | Yes | EDITOR |
+| `GET` | `/api/documents/{id}/export/{format}` | Export as html/markdown/pdf | Yes | VIEWER |
+
+> Complete interactive API documentation: `/docs` (Swagger UI) · Raw OpenAPI spec: `/api/openapi`
 
 ---
 
@@ -392,6 +422,61 @@ npm run type-check
 2. **Role-Based Access Control (RBAC)**: Validates client permission boundaries (OWNER/EDITOR/VIEWER).
 3. **SQL Injection Resistance**: Enforces query parameterization via Sequelize ORM.
 4. **XSS Protection**: HTML sanitization checks within TipTap text parser.
+
+---
+
+## Phase 7A – Enterprise Productivity Features
+
+This release extends the platform with multi-tenant productivity modules. Every feature follows the established RBAC patterns and uses atomic database transactions.
+
+### Favorites & Pins
+
+Document interactions are tracked in dedicated junction tables (`favorite_documents`, `pinned_documents`) scoped strictly to the `userId`. This prevents the multi-tenant state collision problem where a global `isFavorited` column on `Document` would expose one user's private data to another.
+
+```mermaid
+sequenceDiagram
+    participant User
+    participant API as REST API
+    participant RBAC as RBAC Middleware
+    participant DB as PostgreSQL
+
+    User->>API: POST /documents/{id}/favorite
+    API->>RBAC: checkDocumentRole(userId, docId, [OWNER,EDITOR,VIEWER])
+    RBAC-->>API: Authorized
+    API->>DB: FavoriteDocument.findOrCreate({ userId, documentId })
+    DB-->>API: Row created / already exists
+    API-->>User: 200 OK
+```
+
+### Recent Documents
+
+The `user_document_activity` table upserts on every `GET /documents/{id}` (view) and `PUT /documents/{id}` (edit). The `/recent` endpoint orders by `lastOpenedAt DESC` and limits to 20 rows.
+
+### Duplicate Document
+
+Executed inside a single Sequelize transaction:
+1. Clone document content and title (`+ " (Copy)"`).
+2. Insert requesting user as `OWNER` of the copy.
+3. Optionally copy `DocumentCollaborator` rows (excluding the duplicating user).
+4. Copy `DocumentTag` associations.
+5. `COMMIT` or full `ROLLBACK` on any failure.
+
+### Trash (Soft Delete)
+
+The `DELETE /documents/{id}` endpoint sets `deletedAt = NOW()` instead of removing the row. All list endpoints filter `deletedAt IS NULL`. The trash queue (`GET /documents/trash`) shows only documents owned by the requesting user. `POST /restore` clears the soft-delete fields. `DELETE /permanent` performs the actual hard-delete.
+
+### Tags
+
+Tags are a global registry (`tags` table) normalised to lowercase. Documents attach tags via `document_tags` junction rows. OWNER and EDITOR roles can add/remove tags. VIEWER and above can read them.
+
+### Export
+
+A TipTap JSON document tree is recursively serialised to the requested format server-side:
+- **HTML**: Full `<!DOCTYPE html>` document with embedded CSS.
+- **Markdown**: Headings, paragraphs, lists, and code blocks preserved.
+- **PDF**: Valid PDF/1.4 binary generated without external dependencies using a custom minimal PDF writer.
+
+Export requires at least `VIEWER` access. Unsupported formats are rejected immediately via Zod enum validation before any DB query is executed.
 
 ---
 

@@ -1,6 +1,9 @@
 "use client";
 
-import { LogOut, User as UserIcon, ChevronDown, Menu, X, LayoutDashboard, FileText } from 'lucide-react';
+import { 
+  LogOut, User as UserIcon, ChevronDown, Menu, X, 
+  LayoutDashboard, FileText, Star, Pin, Trash2 
+} from 'lucide-react';
 import { useRouter, usePathname } from 'next/navigation';
 import Link from 'next/link';
 import { useState } from 'react';
@@ -18,6 +21,8 @@ import { toast } from '@/hooks/useToast';
 const navItems = [
   { label: 'Dashboard', href: '/dashboard', icon: LayoutDashboard, exact: true },
   { label: 'Documents', href: '/dashboard/documents', icon: FileText, exact: false },
+  { label: 'Favorites', href: '/dashboard/favorites', icon: Star, exact: false },
+  { label: 'Trash Bin', href: '/dashboard/trash', icon: Trash2, exact: false },
 ];
 
 function getInitials(name: string) {

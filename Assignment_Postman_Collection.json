@@ -347,6 +347,319 @@
           }
         }
       ]
+    },
+    {
+      "name": "Phase 7A – Favorites",
+      "item": [
+        {
+          "name": "Favorite Document",
+          "request": {
+            "method": "POST",
+            "header": [{"key": "Authorization", "value": "Bearer {{jwtToken}}"}],
+            "url": {
+              "raw": "{{baseUrl}}/documents/{{documentId}}/favorite",
+              "host": ["{{baseUrl}}"], "path": ["documents", "{{documentId}}", "favorite"]
+            }
+          }
+        },
+        {
+          "name": "Unfavorite Document",
+          "request": {
+            "method": "DELETE",
+            "header": [{"key": "Authorization", "value": "Bearer {{jwtToken}}"}],
+            "url": {
+              "raw": "{{baseUrl}}/documents/{{documentId}}/favorite",
+              "host": ["{{baseUrl}}"], "path": ["documents", "{{documentId}}", "favorite"]
+            }
+          }
+        },
+        {
+          "name": "List Favorites",
+          "request": {
+            "method": "GET",
+            "header": [{"key": "Authorization", "value": "Bearer {{jwtToken}}"}],
+            "url": {
+              "raw": "{{baseUrl}}/documents/favorites",
+              "host": ["{{baseUrl}}"], "path": ["documents", "favorites"]
+            }
+          }
+        }
+      ]
+    },
+    {
+      "name": "Phase 7A – Pinned",
+      "item": [
+        {
+          "name": "Pin Document",
+          "request": {
+            "method": "POST",
+            "header": [{"key": "Authorization", "value": "Bearer {{jwtToken}}"}],
+            "url": {
+              "raw": "{{baseUrl}}/documents/{{documentId}}/pin",
+              "host": ["{{baseUrl}}"], "path": ["documents", "{{documentId}}", "pin"]
+            }
+          }
+        },
+        {
+          "name": "Unpin Document",
+          "request": {
+            "method": "DELETE",
+            "header": [{"key": "Authorization", "value": "Bearer {{jwtToken}}"}],
+            "url": {
+              "raw": "{{baseUrl}}/documents/{{documentId}}/pin",
+              "host": ["{{baseUrl}}"], "path": ["documents", "{{documentId}}", "pin"]
+            }
+          }
+        },
+        {
+          "name": "List Pinned Documents",
+          "request": {
+            "method": "GET",
+            "header": [{"key": "Authorization", "value": "Bearer {{jwtToken}}"}],
+            "url": {
+              "raw": "{{baseUrl}}/documents/pinned",
+              "host": ["{{baseUrl}}"], "path": ["documents", "pinned"]
+            }
+          }
+        }
+      ]
+    },
+    {
+      "name": "Phase 7A – Recent",
+      "item": [
+        {
+          "name": "List Recent Documents",
+          "request": {
+            "method": "GET",
+            "header": [{"key": "Authorization", "value": "Bearer {{jwtToken}}"}],
+            "url": {
+              "raw": "{{baseUrl}}/documents/recent",
+              "host": ["{{baseUrl}}"], "path": ["documents", "recent"]
+            }
+          }
+        }
+      ]
+    },
+    {
+      "name": "Phase 7A – Duplicate",
+      "item": [
+        {
+          "name": "Duplicate Document (no collaborators)",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "var jsonData = pm.response.json();",
+                  "if (jsonData.success && jsonData.data.id) {",
+                  "    pm.collectionVariables.set(\"duplicatedDocId\", jsonData.data.id);",
+                  "}"
+                ],
+                "type": "text/javascript"
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [
+              {"key": "Authorization", "value": "Bearer {{jwtToken}}"},
+              {"key": "Content-Type", "value": "application/json"}
+            ],
+            "body": {"mode": "raw", "raw": "{\"copyCollaborators\": false}"},
+            "url": {
+              "raw": "{{baseUrl}}/documents/{{documentId}}/duplicate",
+              "host": ["{{baseUrl}}"], "path": ["documents", "{{documentId}}", "duplicate"]
+            }
+          }
+        },
+        {
+          "name": "Duplicate Document (with collaborators)",
+          "request": {
+            "method": "POST",
+            "header": [
+              {"key": "Authorization", "value": "Bearer {{jwtToken}}"},
+              {"key": "Content-Type", "value": "application/json"}
+            ],
+            "body": {"mode": "raw", "raw": "{\"copyCollaborators\": true}"},
+            "url": {
+              "raw": "{{baseUrl}}/documents/{{documentId}}/duplicate",
+              "host": ["{{baseUrl}}"], "path": ["documents", "{{documentId}}", "duplicate"]
+            }
+          }
+        }
+      ]
+    },
+    {
+      "name": "Phase 7A – Trash",
+      "item": [
+        {
+          "name": "Soft Delete Document",
+          "request": {
+            "method": "DELETE",
+            "header": [{"key": "Authorization", "value": "Bearer {{jwtToken}}"}],
+            "url": {
+              "raw": "{{baseUrl}}/documents/{{documentId}}",
+              "host": ["{{baseUrl}}"], "path": ["documents", "{{documentId}}"]
+            }
+          }
+        },
+        {
+          "name": "List Trash",
+          "request": {
+            "method": "GET",
+            "header": [{"key": "Authorization", "value": "Bearer {{jwtToken}}"}],
+            "url": {
+              "raw": "{{baseUrl}}/documents/trash",
+              "host": ["{{baseUrl}}"], "path": ["documents", "trash"]
+            }
+          }
+        },
+        {
+          "name": "Restore Document",
+          "request": {
+            "method": "POST",
+            "header": [{"key": "Authorization", "value": "Bearer {{jwtToken}}"}],
+            "url": {
+              "raw": "{{baseUrl}}/documents/{{documentId}}/restore",
+              "host": ["{{baseUrl}}"], "path": ["documents", "{{documentId}}", "restore"]
+            }
+          }
+        },
+        {
+          "name": "Permanently Delete Document",
+          "request": {
+            "method": "DELETE",
+            "header": [{"key": "Authorization", "value": "Bearer {{jwtToken}}"}],
+            "url": {
+              "raw": "{{baseUrl}}/documents/{{documentId}}/permanent",
+              "host": ["{{baseUrl}}"], "path": ["documents", "{{documentId}}", "permanent"]
+            }
+          }
+        }
+      ]
+    },
+    {
+      "name": "Phase 7A – Tags",
+      "variable": [
+        {"key": "tagId", "value": ""}
+      ],
+      "item": [
+        {
+          "name": "Create Tag",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "var jsonData = pm.response.json();",
+                  "if (jsonData.success && jsonData.data.id) {",
+                  "    pm.collectionVariables.set(\"tagId\", jsonData.data.id);",
+                  "}"
+                ],
+                "type": "text/javascript"
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [
+              {"key": "Authorization", "value": "Bearer {{jwtToken}}"},
+              {"key": "Content-Type", "value": "application/json"}
+            ],
+            "body": {"mode": "raw", "raw": "{\"name\": \"backend\"}"},
+            "url": {
+              "raw": "{{baseUrl}}/tags",
+              "host": ["{{baseUrl}}"], "path": ["tags"]
+            }
+          }
+        },
+        {
+          "name": "List All Tags",
+          "request": {
+            "method": "GET",
+            "header": [{"key": "Authorization", "value": "Bearer {{jwtToken}}"}],
+            "url": {
+              "raw": "{{baseUrl}}/tags",
+              "host": ["{{baseUrl}}"], "path": ["tags"]
+            }
+          }
+        },
+        {
+          "name": "Add Tag to Document",
+          "request": {
+            "method": "POST",
+            "header": [
+              {"key": "Authorization", "value": "Bearer {{jwtToken}}"},
+              {"key": "Content-Type", "value": "application/json"}
+            ],
+            "body": {"mode": "raw", "raw": "{\"tagId\": \"{{tagId}}\"}"},
+            "url": {
+              "raw": "{{baseUrl}}/documents/{{documentId}}/tags",
+              "host": ["{{baseUrl}}"], "path": ["documents", "{{documentId}}", "tags"]
+            }
+          }
+        },
+        {
+          "name": "Remove Tag from Document",
+          "request": {
+            "method": "DELETE",
+            "header": [{"key": "Authorization", "value": "Bearer {{jwtToken}}"}],
+            "url": {
+              "raw": "{{baseUrl}}/documents/{{documentId}}/tags/{{tagId}}",
+              "host": ["{{baseUrl}}"], "path": ["documents", "{{documentId}}", "tags", "{{tagId}}"]
+            }
+          }
+        }
+      ]
+    },
+    {
+      "name": "Phase 7A – Export",
+      "item": [
+        {
+          "name": "Export as HTML",
+          "request": {
+            "method": "GET",
+            "header": [{"key": "Authorization", "value": "Bearer {{jwtToken}}"}],
+            "url": {
+              "raw": "{{baseUrl}}/documents/{{documentId}}/export/html",
+              "host": ["{{baseUrl}}"], "path": ["documents", "{{documentId}}", "export", "html"]
+            }
+          }
+        },
+        {
+          "name": "Export as Markdown",
+          "request": {
+            "method": "GET",
+            "header": [{"key": "Authorization", "value": "Bearer {{jwtToken}}"}],
+            "url": {
+              "raw": "{{baseUrl}}/documents/{{documentId}}/export/markdown",
+              "host": ["{{baseUrl}}"], "path": ["documents", "{{documentId}}", "export", "markdown"]
+            }
+          }
+        },
+        {
+          "name": "Export as PDF",
+          "request": {
+            "method": "GET",
+            "header": [{"key": "Authorization", "value": "Bearer {{jwtToken}}"}],
+            "url": {
+              "raw": "{{baseUrl}}/documents/{{documentId}}/export/pdf",
+              "host": ["{{baseUrl}}"], "path": ["documents", "{{documentId}}", "export", "pdf"]
+            }
+          }
+        },
+        {
+          "name": "Export – Invalid Format (expect 400)",
+          "request": {
+            "method": "GET",
+            "header": [{"key": "Authorization", "value": "Bearer {{jwtToken}}"}],
+            "url": {
+              "raw": "{{baseUrl}}/documents/{{documentId}}/export/docx",
+              "host": ["{{baseUrl}}"], "path": ["documents", "{{documentId}}", "export", "docx"]
+            }
+          }
+        }
+      ]
     }
   ]
 }

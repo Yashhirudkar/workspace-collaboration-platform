@@ -834,4 +834,485 @@ export const getApiSpec = () => {
  *           application/json:
  *             schema:
  *               $ref: '#/components/schemas/ErrorResponse'
+ *
+ * /api/documents/favorites:
+ *   get:
+ *     summary: List favorite documents
+ *     description: Returns all documents that the user has favorited.
+ *     tags:
+ *       - Favorites
+ *     security:
+ *       - BearerAuth: []
+ *     responses:
+ *       200:
+ *         description: Array of favorite documents.
+ *         content:
+ *           application/json:
+ *             schema:
+ *               type: array
+ *               items:
+ *                 $ref: '#/components/schemas/Document'
+ *       401:
+ *         description: Unauthorized.
+ *
+ * /api/documents/{id}/favorite:
+ *   post:
+ *     summary: Add document to favorites
+ *     description: Marks the document as a favorite for the authenticated user.
+ *     tags:
+ *       - Favorites
+ *     security:
+ *       - BearerAuth: []
+ *     parameters:
+ *       - name: id
+ *         in: path
+ *         required: true
+ *         schema:
+ *           type: string
+ *           format: uuid
+ *     responses:
+ *       200:
+ *         description: Document favorited.
+ *         content:
+ *           application/json:
+ *             schema:
+ *               $ref: '#/components/schemas/SuccessResponse'
+ *       404:
+ *         description: Document not found.
+ *
+ *   delete:
+ *     summary: Remove document from favorites
+ *     description: Unmarks the document as a favorite.
+ *     tags:
+ *       - Favorites
+ *     security:
+ *       - BearerAuth: []
+ *     parameters:
+ *       - name: id
+ *         in: path
+ *         required: true
+ *         schema:
+ *           type: string
+ *           format: uuid
+ *     responses:
+ *       200:
+ *         description: Document unfavorited.
+ *         content:
+ *           application/json:
+ *             schema:
+ *               $ref: '#/components/schemas/SuccessResponse'
+ *
+ * /api/documents/pinned:
+ *   get:
+ *     summary: List pinned documents
+ *     description: Returns all documents that the user has pinned.
+ *     tags:
+ *       - Pinned
+ *     security:
+ *       - BearerAuth: []
+ *     responses:
+ *       200:
+ *         description: Array of pinned documents.
+ *         content:
+ *           application/json:
+ *             schema:
+ *               type: array
+ *               items:
+ *                 $ref: '#/components/schemas/Document'
+ *       401:
+ *         description: Unauthorized.
+ *
+ * /api/documents/{id}/pin:
+ *   post:
+ *     summary: Pin document
+ *     description: Marks the document as pinned for the authenticated user.
+ *     tags:
+ *       - Pinned
+ *     security:
+ *       - BearerAuth: []
+ *     parameters:
+ *       - name: id
+ *         in: path
+ *         required: true
+ *         schema:
+ *           type: string
+ *           format: uuid
+ *     responses:
+ *       200:
+ *         description: Document pinned.
+ *         content:
+ *           application/json:
+ *             schema:
+ *               $ref: '#/components/schemas/SuccessResponse'
+ *       404:
+ *         description: Document not found.
+ *
+ *   delete:
+ *     summary: Unpin document
+ *     description: Unmarks the document as pinned.
+ *     tags:
+ *       - Pinned
+ *     security:
+ *       - BearerAuth: []
+ *     parameters:
+ *       - name: id
+ *         in: path
+ *         required: true
+ *         schema:
+ *           type: string
+ *           format: uuid
+ *     responses:
+ *       200:
+ *         description: Document unpinned.
+ *         content:
+ *           application/json:
+ *             schema:
+ *               $ref: '#/components/schemas/SuccessResponse'
+ *       401:
+ *         description: Unauthorized.
+ *       403:
+ *         description: Forbidden – insufficient role.
+ *       404:
+ *         description: Document not found.
+ *
+ * /api/documents/recent:
+ *   get:
+ *     summary: List recently opened documents
+ *     description: Returns documents the authenticated user has recently opened, sorted by last opened time descending.
+ *     tags:
+ *       - Recent
+ *     security:
+ *       - BearerAuth: []
+ *     responses:
+ *       200:
+ *         description: Array of recent documents with activity timestamps.
+ *         content:
+ *           application/json:
+ *             schema:
+ *               type: array
+ *               items:
+ *                 $ref: '#/components/schemas/Document'
+ *       401:
+ *         description: Unauthorized.
+ *
+ * /api/documents/{id}/duplicate:
+ *   post:
+ *     summary: Duplicate a document
+ *     description: Creates a transactional copy including all tags. Only OWNER or EDITOR can duplicate. Optionally copies collaborators.
+ *     tags:
+ *       - Documents
+ *     security:
+ *       - BearerAuth: []
+ *     parameters:
+ *       - name: id
+ *         in: path
+ *         required: true
+ *         schema:
+ *           type: string
+ *           format: uuid
+ *     requestBody:
+ *       content:
+ *         application/json:
+ *           schema:
+ *             type: object
+ *             properties:
+ *               copyCollaborators:
+ *                 type: boolean
+ *                 default: false
+ *                 description: If true, copies existing collaborators (excluding the duplicating user).
+ *     responses:
+ *       200:
+ *         description: Duplicated document.
+ *         content:
+ *           application/json:
+ *             schema:
+ *               $ref: '#/components/schemas/Document'
+ *       401:
+ *         description: Unauthorized.
+ *       403:
+ *         description: Forbidden – requires OWNER or EDITOR role.
+ *       404:
+ *         description: Document not found.
+ *
+ * /api/documents/trash:
+ *   get:
+ *     summary: List trashed documents
+ *     description: Returns soft-deleted documents owned by the authenticated user.
+ *     tags:
+ *       - Trash
+ *     security:
+ *       - BearerAuth: []
+ *     responses:
+ *       200:
+ *         description: Array of soft-deleted documents.
+ *         content:
+ *           application/json:
+ *             schema:
+ *               type: array
+ *               items:
+ *                 $ref: '#/components/schemas/Document'
+ *       401:
+ *         description: Unauthorized.
+ *
+ * /api/documents/{id}/restore:
+ *   post:
+ *     summary: Restore a trashed document
+ *     description: Un-deletes a soft-deleted document. Only the OWNER can restore.
+ *     tags:
+ *       - Trash
+ *     security:
+ *       - BearerAuth: []
+ *     parameters:
+ *       - name: id
+ *         in: path
+ *         required: true
+ *         schema:
+ *           type: string
+ *           format: uuid
+ *     responses:
+ *       200:
+ *         description: Document restored.
+ *         content:
+ *           application/json:
+ *             schema:
+ *               $ref: '#/components/schemas/Document'
+ *       401:
+ *         description: Unauthorized.
+ *       403:
+ *         description: Forbidden – requires OWNER role.
+ *       404:
+ *         description: Document not found.
+ *
+ * /api/documents/{id}/permanent:
+ *   delete:
+ *     summary: Permanently delete a document
+ *     description: Hard-deletes a document and all associated data. Only the OWNER can invoke this. This action is irreversible.
+ *     tags:
+ *       - Trash
+ *     security:
+ *       - BearerAuth: []
+ *     parameters:
+ *       - name: id
+ *         in: path
+ *         required: true
+ *         schema:
+ *           type: string
+ *           format: uuid
+ *     responses:
+ *       200:
+ *         description: Document permanently deleted.
+ *         content:
+ *           application/json:
+ *             schema:
+ *               $ref: '#/components/schemas/SuccessResponse'
+ *       401:
+ *         description: Unauthorized.
+ *       403:
+ *         description: Forbidden – requires OWNER role.
+ *       404:
+ *         description: Document not found.
+ *
+ * /api/tags:
+ *   get:
+ *     summary: List all tags
+ *     description: Returns all available tags, sorted alphabetically.
+ *     tags:
+ *       - Tags
+ *     security:
+ *       - BearerAuth: []
+ *     responses:
+ *       200:
+ *         description: Array of tags.
+ *         content:
+ *           application/json:
+ *             schema:
+ *               type: object
+ *               properties:
+ *                 success:
+ *                   type: boolean
+ *                 data:
+ *                   type: array
+ *                   items:
+ *                     $ref: '#/components/schemas/Tag'
+ *       401:
+ *         description: Unauthorized.
+ *   post:
+ *     summary: Create a tag
+ *     description: Creates a new global tag (case-insensitive, normalised to lowercase).
+ *     tags:
+ *       - Tags
+ *     security:
+ *       - BearerAuth: []
+ *     requestBody:
+ *       required: true
+ *       content:
+ *         application/json:
+ *           schema:
+ *             type: object
+ *             required: [name]
+ *             properties:
+ *               name:
+ *                 type: string
+ *                 maxLength: 50
+ *                 example: backend
+ *     responses:
+ *       200:
+ *         description: Tag created or found.
+ *         content:
+ *           application/json:
+ *             schema:
+ *               type: object
+ *               properties:
+ *                 success:
+ *                   type: boolean
+ *                 data:
+ *                   $ref: '#/components/schemas/Tag'
+ *       400:
+ *         description: Validation error.
+ *       401:
+ *         description: Unauthorized.
+ *
+ * /api/documents/{id}/tags:
+ *   post:
+ *     summary: Add a tag to a document
+ *     description: Attaches an existing tag to a document. Requires OWNER or EDITOR role.
+ *     tags:
+ *       - Tags
+ *     security:
+ *       - BearerAuth: []
+ *     parameters:
+ *       - name: id
+ *         in: path
+ *         required: true
+ *         schema:
+ *           type: string
+ *           format: uuid
+ *     requestBody:
+ *       required: true
+ *       content:
+ *         application/json:
+ *           schema:
+ *             type: object
+ *             required: [tagId]
+ *             properties:
+ *               tagId:
+ *                 type: string
+ *                 format: uuid
+ *     responses:
+ *       200:
+ *         description: Tag added.
+ *         content:
+ *           application/json:
+ *             schema:
+ *               $ref: '#/components/schemas/SuccessResponse'
+ *       400:
+ *         description: Validation error.
+ *       401:
+ *         description: Unauthorized.
+ *       403:
+ *         description: Forbidden – requires OWNER or EDITOR role.
+ *       404:
+ *         description: Document not found.
+ *
+ * /api/documents/{id}/tags/{tagId}:
+ *   delete:
+ *     summary: Remove a tag from a document
+ *     description: Detaches a tag from a document. Requires OWNER or EDITOR role.
+ *     tags:
+ *       - Tags
+ *     security:
+ *       - BearerAuth: []
+ *     parameters:
+ *       - name: id
+ *         in: path
+ *         required: true
+ *         schema:
+ *           type: string
+ *           format: uuid
+ *       - name: tagId
+ *         in: path
+ *         required: true
+ *         schema:
+ *           type: string
+ *           format: uuid
+ *     responses:
+ *       200:
+ *         description: Tag removed.
+ *         content:
+ *           application/json:
+ *             schema:
+ *               $ref: '#/components/schemas/SuccessResponse'
+ *       401:
+ *         description: Unauthorized.
+ *       403:
+ *         description: Forbidden – requires OWNER or EDITOR role.
+ *       404:
+ *         description: Document not found.
+ *
+ * /api/documents/{id}/export/{format}:
+ *   get:
+ *     summary: Export a document
+ *     description: |
+ *       Exports the document content as a downloadable file.
+ *       Supported formats: `html`, `markdown` (alias `md`), `pdf`.
+ *       PDF is generated server-side as a valid PDF/1.4 binary.
+ *       Requires at least VIEWER access.
+ *     tags:
+ *       - Export
+ *     security:
+ *       - BearerAuth: []
+ *     parameters:
+ *       - name: id
+ *         in: path
+ *         required: true
+ *         schema:
+ *           type: string
+ *           format: uuid
+ *       - name: format
+ *         in: path
+ *         required: true
+ *         schema:
+ *           type: string
+ *           enum: [html, markdown, md, pdf]
+ *         example: pdf
+ *     responses:
+ *       200:
+ *         description: File download.
+ *         content:
+ *           application/pdf:
+ *             schema:
+ *               type: string
+ *               format: binary
+ *           text/html:
+ *             schema:
+ *               type: string
+ *           text/markdown:
+ *             schema:
+ *               type: string
+ *       400:
+ *         description: Unsupported export format.
+ *       401:
+ *         description: Unauthorized.
+ *       403:
+ *         description: Forbidden – insufficient role.
+ *       404:
+ *         description: Document not found.
+ *
+ * components:
+ *   schemas:
+ *     Tag:
+ *       type: object
+ *       properties:
+ *         id:
+ *           type: string
+ *           format: uuid
+ *         name:
+ *           type: string
+ *           example: backend
+ *         createdAt:
+ *           type: string
+ *           format: date-time
+ *         updatedAt:
+ *           type: string
+ *           format: date-time
  */

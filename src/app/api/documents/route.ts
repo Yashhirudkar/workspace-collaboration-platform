@@ -1,3 +1,4 @@
+export const dynamic = 'force-dynamic';
 import { NextRequest } from 'next/server';
 import { createDocumentSchema } from '@/schemas/document.schema';
 import { DocumentService } from '@/services/document.service';

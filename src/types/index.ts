@@ -6,6 +6,13 @@ export interface User {
   updatedAt: string;
 }
 
+export interface Tag {
+  id: string;
+  name: string;
+  createdAt: string;
+  updatedAt: string;
+}
+
 export interface Document {
   id: string;
   title: string;
@@ -15,6 +22,11 @@ export interface Document {
   createdAt: string;
   updatedAt: string;
   role?: 'OWNER' | 'EDITOR' | 'VIEWER';
+  deletedAt?: string | null;
+  deletedBy?: string | null;
+  isFavorite?: boolean;
+  isPinned?: boolean;
+  tags?: Tag[];
 }
 
 export interface DocumentVersion {

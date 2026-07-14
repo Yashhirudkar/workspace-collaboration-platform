@@ -1,3 +1,4 @@
+export const dynamic = 'force-dynamic';
 import { NextRequest } from 'next/server';
 import { VersionService } from '@/services/version.service';
 import { successResponse, errorResponse } from '@/utils/response';
