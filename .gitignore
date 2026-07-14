@@ -1,0 +1,36 @@
+# Dependency directories
+node_modules/
+/jspm_packages/
+
+# Next.js build and cache output
+.next/
+out/
+build/
+
+# Production/Debug logs
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+.pnpm-debug.log*
+
+# Environment credentials (local secrets)
+.env
+.env.local
+.env.development.local
+.env.test.local
+.env.production.local
+
+# IDE configurations and temporary logs
+.idea/
+.vscode/
+*.suo
+*.ntvs*
+*.njsproj
+*.sln
+*.sw?
+.DS_Store
+*.tsbuildinfo
+
+# SQLite databases
+*.db
+*.db-journal
