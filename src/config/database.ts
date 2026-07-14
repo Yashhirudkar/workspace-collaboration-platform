@@ -1,9 +1,11 @@
 import { Sequelize } from 'sequelize';
+import pg from 'pg';
 import { ENV } from './env';
 import { logger } from '../utils/logger';
 
 export const sequelize = new Sequelize(ENV.DATABASE_URL, {
   dialect: 'postgres',
+  dialectModule: pg,
   logging: (msg) => logger.debug(msg),
   define: {
     timestamps: true,
@@ -61,6 +63,7 @@ async function createDatabaseIfNotExists() {
   
   const tempSequelize = new Sequelize(url.toString(), {
     dialect: 'postgres',
+    dialectModule: pg,
     logging: false,
   });
 
