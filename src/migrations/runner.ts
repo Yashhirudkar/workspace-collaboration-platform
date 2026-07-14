@@ -1,95 +1,60 @@
 import { sequelize } from '../config/database';
 import { logger } from '../utils/logger';
-
-const MIGRATIONS = [
-  {
-    name: '01_create_productivity_tables',
-    sql: `
-      ALTER TABLE "documents" ADD COLUMN IF NOT EXISTS "deletedAt" TIMESTAMP WITH TIME ZONE NULL;
-      ALTER TABLE "documents" ADD COLUMN IF NOT EXISTS "deletedBy" UUID NULL;
-      ALTER TABLE "documents" ADD COLUMN IF NOT EXISTS "deletedReason" VARCHAR(255) NULL;
-
-      CREATE TABLE IF NOT EXISTS "tags" (
-        "id" UUID PRIMARY KEY,
-        "name" VARCHAR(255) UNIQUE NOT NULL,
-        "createdAt" TIMESTAMP WITH TIME ZONE NOT NULL,
-        "updatedAt" TIMESTAMP WITH TIME ZONE NOT NULL
-      );
-
-      CREATE TABLE IF NOT EXISTS "favorite_documents" (
-        "id" UUID PRIMARY KEY,
-        "userId" UUID NOT NULL REFERENCES "users"("id") ON DELETE CASCADE,
-        "documentId" UUID NOT NULL REFERENCES "documents"("id") ON DELETE CASCADE,
-        "createdAt" TIMESTAMP WITH TIME ZONE NOT NULL,
-        "updatedAt" TIMESTAMP WITH TIME ZONE NOT NULL,
-        UNIQUE("userId", "documentId")
-      );
-
-      CREATE TABLE IF NOT EXISTS "pinned_documents" (
-        "id" UUID PRIMARY KEY,
-        "userId" UUID NOT NULL REFERENCES "users"("id") ON DELETE CASCADE,
-        "documentId" UUID NOT NULL REFERENCES "documents"("id") ON DELETE CASCADE,
-        "createdAt" TIMESTAMP WITH TIME ZONE NOT NULL,
-        "updatedAt" TIMESTAMP WITH TIME ZONE NOT NULL,
-        UNIQUE("userId", "documentId")
-      );
-
-      CREATE TABLE IF NOT EXISTS "document_tags" (
-        "id" UUID PRIMARY KEY,
-        "documentId" UUID NOT NULL REFERENCES "documents"("id") ON DELETE CASCADE,
-        "tagId" UUID NOT NULL REFERENCES "tags"("id") ON DELETE CASCADE,
-        "createdAt" TIMESTAMP WITH TIME ZONE NOT NULL,
-        "updatedAt" TIMESTAMP WITH TIME ZONE NOT NULL,
-        UNIQUE("documentId", "tagId")
-      );
-
-      CREATE TABLE IF NOT EXISTS "user_document_activity" (
-        "id" UUID PRIMARY KEY,
-        "userId" UUID NOT NULL REFERENCES "users"("id") ON DELETE CASCADE,
-        "documentId" UUID NOT NULL REFERENCES "documents"("id") ON DELETE CASCADE,
-        "lastOpenedAt" TIMESTAMP WITH TIME ZONE NULL,
-        "lastEditedAt" TIMESTAMP WITH TIME ZONE NULL,
-        "lastViewedAt" TIMESTAMP WITH TIME ZONE NULL,
-        "createdAt" TIMESTAMP WITH TIME ZONE NOT NULL,
-        "updatedAt" TIMESTAMP WITH TIME ZONE NOT NULL,
-        UNIQUE("userId", "documentId")
-      );
-    `
-  }
-];
+import migration = require('../../migrations/20260714153811-create-productivity-features.js');
 
 export async function runDatabaseMigrations() {
   try {
-    // Create meta table
-    await sequelize.query(`
-      CREATE TABLE IF NOT EXISTS "migrations_meta" (
-        "name" VARCHAR(255) PRIMARY KEY,
-        "executedAt" TIMESTAMP WITH TIME ZONE NOT NULL DEFAULT CURRENT_TIMESTAMP
-      );
+    // 1. Check if migrations_meta table exists first to avoid concurrent CREATE TABLE race conditions
+    const [tableExists] = await sequelize.query(`
+      SELECT 1 FROM information_schema.tables 
+      WHERE table_schema = 'public' AND table_name = 'migrations_meta'
     `);
 
-    // Execute migrations sequentially
-    for (const migration of MIGRATIONS) {
-      const [ran] = await sequelize.query(`
-        SELECT 1 FROM "migrations_meta" WHERE "name" = :name;
-      `, {
-        replacements: { name: migration.name },
-        type: 'SELECT'
-      });
-
-      if (ran.length === 0) {
-        logger.info(`Executing DB migration: ${migration.name}...`);
-        await sequelize.query(migration.sql);
+    if (tableExists.length === 0) {
+      try {
         await sequelize.query(`
-          INSERT INTO "migrations_meta" ("name") VALUES (:name);
-        `, {
-          replacements: { name: migration.name }
-        });
-        logger.info(`DB Migration successfully executed: ${migration.name}`);
+          CREATE TABLE "migrations_meta" (
+            "name" VARCHAR(255) PRIMARY KEY,
+            "executedAt" TIMESTAMP WITH TIME ZONE NOT NULL DEFAULT CURRENT_TIMESTAMP
+          );
+        `);
+      } catch (err: any) {
+        // If it was created concurrently by another worker, ignore the constraint violation
+        if (!err.message.includes('already exists') && !err.message.includes('duplicate key')) {
+          throw err;
+        }
       }
     }
+
+    // 2. Check if this migration already ran
+    const migrationName = '20260714153811-create-productivity-features';
+    const ran = await sequelize.query(`
+      SELECT 1 FROM "migrations_meta" WHERE "name" = :name;
+    `, {
+      replacements: { name: migrationName },
+      type: 'SELECT'
+    }) as any[];
+
+    if (ran.length === 0) {
+      logger.info(`Executing DB migration via Sequelize Migration API: ${migrationName}...`);
+      
+      const queryInterface = sequelize.getQueryInterface();
+      const Sequelize = sequelize.constructor;
+      
+      // Execute the Up migration using the Sequelize Migration API
+      await migration.up(queryInterface, Sequelize);
+
+      // Record migration execution
+      await sequelize.query(`
+        INSERT INTO "migrations_meta" ("name") VALUES (:name);
+      `, {
+        replacements: { name: migrationName }
+      });
+      
+      logger.info(`DB Migration successfully executed: ${migrationName}`);
+    }
   } catch (error) {
-    logger.error('Failed to run migration scripts:', error);
+    logger.error('Failed to run database migrations:', error);
     throw error;
   }
 }
