@@ -104,23 +104,19 @@ async function createDatabaseIfNotExists() {
   }
 }
 
+import { runDatabaseMigrations } from '../migrations/runner';
+
 export async function initDatabase() {
   if (isInitialized) return;
   
   await createDatabaseIfNotExists();
+
+  // Run dynamic migrations to ensure all Phase 7A tables and columns exist
+  await runDatabaseMigrations();
   
   await setupAssociations();
   // Using sync() to auto-create tables for the assignment. In production, use migrations.
   await sequelize.sync();
-
-  // Dynamic migration: Ensure soft-delete columns exist in existing 'documents' table
-  try {
-    await sequelize.query('ALTER TABLE "documents" ADD COLUMN IF NOT EXISTS "deletedAt" TIMESTAMP WITH TIME ZONE;');
-    await sequelize.query('ALTER TABLE "documents" ADD COLUMN IF NOT EXISTS "deletedBy" UUID;');
-    await sequelize.query('ALTER TABLE "documents" ADD COLUMN IF NOT EXISTS "deletedReason" VARCHAR(255);');
-  } catch (err) {
-    logger.error('Failed to migrate documents table columns:', err);
-  }
   
   isInitialized = true;
 }
