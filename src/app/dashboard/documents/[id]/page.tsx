@@ -198,14 +198,20 @@ export default function DocumentPage() {
         lastSynced={lastSynced}
       />
 
+      {/* Breadcrumb link */}
+      <div className="pt-2">
+        <Link 
+          href="/dashboard/documents" 
+          className="inline-flex items-center gap-1.5 text-xs font-semibold text-muted-foreground/80 hover:text-primary transition-colors group"
+        >
+          <ArrowLeft className="h-3.5 w-3.5 transition-transform group-hover:-translate-x-0.5" />
+          Back to Documents
+        </Link>
+      </div>
+
       {/* Document header */}
       <div className="mb-6">
         <div className="flex items-center gap-3">
-          <Link href="/dashboard/documents" passHref>
-            <Button variant="ghost" size="icon" className="h-9 w-9 rounded-full border border-border/45 hover:bg-muted shrink-0" aria-label="Go Back">
-              <ArrowLeft className="h-4.5 w-4.5" />
-            </Button>
-          </Link>
           <Input
             id="doc-title-input"
             value={title}
