@@ -2,12 +2,23 @@ import { io, Socket } from 'socket.io-client';
 
 class SocketClientService {
   private socket: Socket | null = null;
+  private isConnectionDisabled = false;
 
-  connect(token: string): Socket {
+  connect(token: string): Socket | null {
+    if (this.isConnectionDisabled) return null;
     if (this.socket?.connected) return this.socket;
 
-    this.socket = io(typeof window !== 'undefined' ? window.location.origin : '', {
-      path: '/api/socket',
+    const isVercel = typeof window !== 'undefined' && window.location.hostname.includes('vercel.app');
+    const serverUrl = process.env.NEXT_PUBLIC_SOCKET_SERVER_URL;
+
+    if (isVercel && !serverUrl) {
+      console.warn('Socket.IO is disabled in production (Vercel) because NEXT_PUBLIC_SOCKET_SERVER_URL is not configured.');
+      this.isConnectionDisabled = true;
+      return null;
+    }
+
+    const connectionUrl = serverUrl || (typeof window !== 'undefined' ? window.location.origin : '');
+    const options: any = {
       autoConnect: true,
       auth: {
         token: `Bearer ${token}`,
@@ -15,7 +26,13 @@ class SocketClientService {
       reconnection: true,
       reconnectionAttempts: 10,
       reconnectionDelay: 2000,
-    });
+    };
+
+    if (!serverUrl) {
+      options.path = '/api/socket';
+    }
+
+    this.socket = io(connectionUrl, options);
 
     this.socket.on('connect', () => {
       console.info('Socket.io connected successfully.');

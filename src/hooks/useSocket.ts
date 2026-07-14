@@ -19,6 +19,10 @@ export function useSocket() {
     }
 
     const socket = socketClientService.connect(token);
+    if (!socket) {
+      setConnectionState('connected');
+      return;
+    }
 
     const onConnect = () => {
       setConnectionState('connected');
