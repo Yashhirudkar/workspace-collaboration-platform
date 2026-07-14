@@ -246,12 +246,12 @@ export function DocumentToolbar({
             <Button
               variant="ghost"
               size="sm"
-              className="h-8 gap-1.5 text-muted-foreground hover:text-foreground text-xs rounded-lg"
+              className="h-8 gap-1 px-2 sm:px-3 text-muted-foreground hover:text-foreground text-xs rounded-lg"
             >
               <TagIcon className="h-4 w-4" />
-              <span>Tags</span>
+              <span className="hidden sm:inline">Tags</span>
               {docTags.length > 0 && (
-                <Badge variant="secondary" className="px-1.5 py-0 h-4 min-w-4 flex items-center justify-center text-[9px] rounded-full">
+                <Badge variant="secondary" className="px-1.5 py-0 h-4 min-w-4 flex items-center justify-center text-[9px] rounded-full ml-0.5">
                   {docTags.length}
                 </Badge>
               )}
@@ -304,10 +304,10 @@ export function DocumentToolbar({
             <Button
               variant="ghost"
               size="sm"
-              className="h-8 gap-1.5 text-muted-foreground hover:text-foreground text-xs rounded-lg"
+              className="h-8 gap-1 px-2 sm:px-3 text-muted-foreground hover:text-foreground text-xs rounded-lg"
             >
               <Copy className="h-4 w-4" />
-              <span>Duplicate</span>
+              <span className="hidden sm:inline">Duplicate</span>
             </Button>
           </Dialog.Trigger>
           <Dialog.Portal>
@@ -353,10 +353,10 @@ export function DocumentToolbar({
             <Button
               variant="ghost"
               size="sm"
-              className="h-8 gap-1.5 text-muted-foreground hover:text-foreground text-xs rounded-lg"
+              className="h-8 gap-1 px-2 sm:px-3 text-muted-foreground hover:text-foreground text-xs rounded-lg"
             >
               <Download className="h-4 w-4" />
-              <span>Export</span>
+              <span className="hidden sm:inline">Export</span>
             </Button>
           </DropdownMenuTrigger>
           <DropdownMenuContent align="start" className="w-40 p-1">
@@ -407,10 +407,10 @@ export function DocumentToolbar({
             variant="ghost"
             size="sm"
             onClick={handleMoveToTrash}
-            className="h-8 gap-1.5 text-muted-foreground hover:text-destructive hover:bg-destructive/10 text-xs rounded-lg"
+            className="h-8 gap-1 px-2 sm:px-3 text-muted-foreground hover:text-destructive hover:bg-destructive/10 text-xs rounded-lg"
           >
             <Trash2 className="h-4 w-4" />
-            <span>Trash</span>
+            <span className="hidden sm:inline">Trash</span>
           </Button>
         )}
       </div>
@@ -440,21 +440,23 @@ export function DocumentToolbar({
         <div className="h-3 w-[1px] bg-border" />
 
         {/* Real-time WebSockets connection latency badge */}
-        <div className="flex items-center gap-1.5 pl-1.5">
+        <div className="flex items-center gap-1 pl-1">
           {connectionState === 'connected' ? (
             <span className="flex items-center gap-1 text-green-600 font-medium" title="WebSocket connected">
               <Wifi className="h-3.5 w-3.5" />
-              Connected {latency !== null && `(${latency}ms)`}
+              <span className="hidden sm:inline">Connected</span> {latency !== null && `(${latency}ms)`}
             </span>
           ) : connectionState === 'reconnecting' ? (
             <span className="flex items-center gap-1 text-yellow-600 font-medium animate-pulse">
               <Wifi className="h-3.5 w-3.5" />
-              Connecting...
+              <span className="hidden sm:inline">Connecting...</span>
+              <span className="inline sm:hidden text-[9px]">Reconnecting</span>
             </span>
           ) : (
-            <span className="flex items-center gap-1 text-amber-600 font-medium">
+            <span className="flex items-center gap-1 text-amber-600 font-medium" title="Offline Mode">
               <WifiOff className="h-3.5 w-3.5" />
-              Offline Mode
+              <span className="hidden sm:inline">Offline Mode</span>
+              <span className="inline sm:hidden text-[9px]">Offline</span>
             </span>
           )}
         </div>
@@ -464,10 +466,10 @@ export function DocumentToolbar({
           variant="outline"
           size="sm"
           onClick={onHistoryOpen}
-          className="h-7 text-[10px] gap-1 px-2.5 shrink-0 border-amber-200 text-amber-700 bg-amber-50 hover:bg-amber-100 hover:text-amber-800 rounded-lg"
+          className="h-7 text-[10px] gap-1 px-2 shrink-0 border-amber-200 text-amber-700 bg-amber-50 hover:bg-amber-100 hover:text-amber-800 rounded-lg"
         >
           <Clock className="h-3.5 w-3.5" />
-          History
+          <span className="hidden sm:inline">History</span>
         </Button>
       </div>
 
