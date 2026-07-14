@@ -230,14 +230,14 @@ export default function DocumentsPage() {
       <div className="max-w-4xl mx-auto space-y-6">
 
         {/* Header Block */}
-        <div className="flex items-center justify-between">
+        <div className="flex flex-col sm:flex-row justify-between sm:items-center gap-3">
           <div>
             <h1 className="text-xl font-bold text-foreground">Workspace Canvas</h1>
             <p className="text-xs text-muted-foreground mt-0.5">
               Browse and coordinate your shared files ({documents.length} items total)
             </p>
           </div>
-          <Button id="create-document-btn" size="sm" onClick={() => setIsCreateOpen(true)} className="gap-1.5 font-semibold shrink-0 shadow-sm">
+          <Button id="create-document-btn" size="sm" onClick={() => setIsCreateOpen(true)} className="gap-1.5 font-semibold shrink-0 shadow-sm self-start sm:self-auto">
             <Plus className="h-4 w-4" />
             New Document
           </Button>
