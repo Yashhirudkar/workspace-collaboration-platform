@@ -89,16 +89,20 @@ export function initSocketService(io: Server) {
 
     // ── Document Collaboration Room Events ────────────────────────────────
 
-    socket.on('join-document', (documentId: string) => {
-      socket.join(`doc-${documentId}`);
-      logger.info(`User ${userId} joined room doc-${documentId}`);
-      socket.to(`doc-${documentId}`).emit('presence:joined', { userId });
+    socket.on('join-document', (data: string | { documentId: string; name?: string }) => {
+      const docId = typeof data === 'string' ? data : data.documentId;
+      const name = typeof data === 'string' ? undefined : data.name;
+      socket.join(`doc-${docId}`);
+      logger.info(`User ${userId} (${name || 'Anonymous'}) joined room doc-${docId}`);
+      socket.to(`doc-${docId}`).emit('presence:joined', { userId, name });
     });
 
-    socket.on('leave-document', (documentId: string) => {
-      socket.leave(`doc-${documentId}`);
-      logger.info(`User ${userId} left room doc-${documentId}`);
-      socket.to(`doc-${documentId}`).emit('presence:left', { userId });
+    socket.on('leave-document', (data: string | { documentId: string; name?: string }) => {
+      const docId = typeof data === 'string' ? data : data.documentId;
+      const name = typeof data === 'string' ? undefined : data.name;
+      socket.leave(`doc-${docId}`);
+      logger.info(`User ${userId} (${name || 'Anonymous'}) left room doc-${docId}`);
+      socket.to(`doc-${docId}`).emit('presence:left', { userId, name });
     });
 
     socket.on('cursor-update', (data: { documentId: string; name?: string; position: unknown }) => {

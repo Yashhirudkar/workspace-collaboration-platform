@@ -7,7 +7,7 @@ import { initDatabase } from '@/config/database';
 import { getUserIdFromRequest } from '@/middleware/auth';
 import { checkDocumentRole } from '@/middleware/roles';
 import { DOCUMENT_ROLES } from '@/constants/roles';
-import { emitToUser } from '@/services/socket.service';
+import { emitToUser, getIO } from '@/services/socket.service';
 import { z } from 'zod';
 
 const uuidSchema = z.string().uuid('Invalid document ID format');
@@ -34,14 +34,33 @@ export async function PUT(req: NextRequest, { params }: { params: { id: string }
     const validatedData = updateDocumentSchema.parse(body);
     const document = await DocumentService.updateDocument(userId, params.id, validatedData);
 
-    // Real-time: broadcast updated document metadata to all user tabs
-    emitToUser(userId, 'workspace:document-updated', { documentId: params.id, changes: validatedData });
+    // The saving device sends its socket.id as x-socket-id header.
+    // We include it in the broadcast so the saving tab can skip applying
+    // its own save (prevents flicker), while OTHER devices/tabs of the same
+    // user DO apply it (enables cross-device sync, e.g. mobile → PC).
+    const fromSocketId = req.headers.get('x-socket-id') || undefined;
+    const io = getIO();
+    const payload = {
+      documentId: params.id,
+      changes: validatedData,
+      fromSocketId,
+    };
+
+    // Broadcast to all tabs of this user (cross-device sync)
+    emitToUser(userId, 'workspace:document-updated', payload);
+
+    // Also broadcast to the doc room so collaborators (different users)
+    // viewing the same document get the update
+    if (io) {
+      io.to(`doc-${params.id}`).emit('workspace:document-updated', payload);
+    }
 
     return successResponse(document, 'Document updated successfully');
   } catch (error) {
     return errorResponse(error);
   }
 }
+
 
 export async function DELETE(req: NextRequest, { params }: { params: { id: string } }) {
   try {

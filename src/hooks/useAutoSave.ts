@@ -9,7 +9,8 @@ export type SaveStatus = 'saved' | 'saving' | 'offline';
 export function useAutoSave(
   documentId: string,
   isOnline: boolean,
-  existingDoc: Document | null
+  existingDoc: Document | null,
+  socketId?: string | null   // Pass the current tab's socket.id to identify this device in broadcasts
 ) {
   const [status, setStatus] = useState<SaveStatus>('saved');
   const debounceTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
@@ -37,15 +38,16 @@ export function useAutoSave(
           title,
           content,
           isOnline,
-          existingDoc
+          existingDoc,
+          socketId ?? undefined  // pass socket ID so the server can tag the broadcast
         );
         setStatus(nextStatus);
       } catch (error) {
         console.error('Autosave hook failed:', error);
-        setStatus('offline'); // fallback to offline state since local save is guaranteed
+        setStatus('offline');
       }
     }, 500); // 500ms debounce
-  }, [documentId, isOnline, existingDoc]);
+  }, [documentId, isOnline, existingDoc, socketId]);
 
   return { status, triggerSave, setStatus };
 }

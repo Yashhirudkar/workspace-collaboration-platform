@@ -14,7 +14,8 @@ export const autosaveService = {
     title: string,
     content: Record<string, unknown>,
     isOnline: boolean,
-    existingDoc: Document | null
+    existingDoc: Document | null,
+    socketId?: string
   ): Promise<'saved' | 'offline'> {
     // 1. Update local cache immediately (Zero Data Loss)
     const updatedDoc: Document = {
@@ -37,7 +38,7 @@ export const autosaveService = {
 
     try {
       // 3. If online, sync directly to the server
-      await documentService.update(documentId, { title, content });
+      await documentService.update(documentId, { title, content }, socketId);
       // Clean queue for this document in case there was a leftover offline update
       await idbService.dequeueUpdate(documentId);
       return 'saved';

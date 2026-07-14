@@ -44,7 +44,7 @@ export default function DocumentPage() {
   const [isDrawerOpen, setIsDrawerOpen] = useState(false);
   const [selectedRestoreVersion, setSelectedRestoreVersion] = useState<DocumentVersion | null>(null);
 
-  const { status: saveStatus, triggerSave, setStatus: setSaveStatus } = useAutoSave(id, isOnline, document);
+  const { status: saveStatus, triggerSave, setStatus: setSaveStatus } = useAutoSave(id, isOnline, document, socket?.id);
 
   // Callback to handle remote changes without feedback loops
   const handleRemoteChange = useCallback((update: { title?: string; content?: Record<string, unknown> }) => {

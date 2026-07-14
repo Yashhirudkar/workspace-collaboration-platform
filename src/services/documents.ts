@@ -17,8 +17,10 @@ export const documentService = {
     return response.data.data;
   },
 
-  async update(id: string, data: { title?: string; content?: Record<string, unknown> }): Promise<Document> {
-    const response = await api.put<ApiResponse<Document>>(`/documents/${id}`, data);
+  async update(id: string, data: { title?: string; content?: Record<string, unknown> }, socketId?: string): Promise<Document> {
+    const response = await api.put<ApiResponse<Document>>(`/documents/${id}`, data, {
+      headers: socketId ? { 'x-socket-id': socketId } : undefined,
+    });
     return response.data.data;
   },
 

@@ -14,6 +14,7 @@ export interface WorkspaceDocumentCreatedPayload {
 export interface WorkspaceDocumentUpdatedPayload {
   documentId: string;
   changes: Partial<Document>;
+  fromSocketId?: string;
 }
 
 export interface WorkspaceDocumentDeletedPayload {
