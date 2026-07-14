@@ -4,7 +4,7 @@ import { useEffect, useState, useCallback, useRef } from 'react';
 import {
   Plus, FileText, Search, MoreHorizontal, Trash2, Edit3,
   Star, Pin, Copy, Tag as TagIcon, ArrowUpDown, SlidersHorizontal,
-  Loader2
+  Loader2, List, LayoutGrid
 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -42,6 +42,23 @@ export default function DocumentsPage() {
   const { user } = useAuth();
   const [documents, setDocuments] = useState<Document[]>([]);
   const [isLoading, setIsLoading] = useState(true);
+  const [viewMode, setViewMode] = useState<'list' | 'grid'>('list');
+
+  useEffect(() => {
+    if (typeof window !== 'undefined') {
+      const savedMode = localStorage.getItem('doc-view-mode') as 'list' | 'grid';
+      if (savedMode === 'list' || savedMode === 'grid') {
+        setViewMode(savedMode);
+      }
+    }
+  }, []);
+
+  const handleSetViewMode = (mode: 'list' | 'grid') => {
+    setViewMode(mode);
+    if (typeof window !== 'undefined') {
+      localStorage.setItem('doc-view-mode', mode);
+    }
+  };
 
   // Search and filters
   const [searchQuery, setSearchQuery] = useState('');
@@ -241,32 +258,56 @@ export default function DocumentsPage() {
               />
             </div>
 
-            {/* Tab selection badges */}
-            <div className="flex bg-muted/40 p-1 rounded-lg border border-border/80 self-start sm:self-auto gap-0.5">
-              <Button
-                variant={filterTab === 'all' ? 'secondary' : 'ghost'}
-                size="sm"
-                className="h-7 text-xs px-2.5 font-semibold"
-                onClick={() => setFilterTab('all')}
-              >
-                All
-              </Button>
-              <Button
-                variant={filterTab === 'favorites' ? 'secondary' : 'ghost'}
-                size="sm"
-                className="h-7 text-xs px-2.5 font-semibold"
-                onClick={() => setFilterTab('favorites')}
-              >
-                Favorites
-              </Button>
-              <Button
-                variant={filterTab === 'owned' ? 'secondary' : 'ghost'}
-                size="sm"
-                className="h-7 text-xs px-2.5 font-semibold"
-                onClick={() => setFilterTab('owned')}
-              >
-                My Docs
-              </Button>
+            <div className="flex items-center gap-2 self-start sm:self-auto">
+              {/* Tab selection badges */}
+              <div className="flex bg-muted/40 p-1 rounded-lg border border-border/80 gap-0.5">
+                <Button
+                  variant={filterTab === 'all' ? 'secondary' : 'ghost'}
+                  size="sm"
+                  className="h-7 text-xs px-2.5 font-semibold"
+                  onClick={() => setFilterTab('all')}
+                >
+                  All
+                </Button>
+                <Button
+                  variant={filterTab === 'favorites' ? 'secondary' : 'ghost'}
+                  size="sm"
+                  className="h-7 text-xs px-2.5 font-semibold"
+                  onClick={() => setFilterTab('favorites')}
+                >
+                  Favorites
+                </Button>
+                <Button
+                  variant={filterTab === 'owned' ? 'secondary' : 'ghost'}
+                  size="sm"
+                  className="h-7 text-xs px-2.5 font-semibold"
+                  onClick={() => setFilterTab('owned')}
+                >
+                  My Docs
+                </Button>
+              </div>
+
+              {/* View Mode Toggle Button Group */}
+              <div className="flex bg-muted/40 p-1 rounded-lg border border-border/80 gap-0.5">
+                <Button
+                  variant={viewMode === 'list' ? 'secondary' : 'ghost'}
+                  size="sm"
+                  className="h-7 w-7 p-0 flex items-center justify-center rounded"
+                  onClick={() => handleSetViewMode('list')}
+                  title="List View"
+                >
+                  <List className="h-4 w-4" />
+                </Button>
+                <Button
+                  variant={viewMode === 'grid' ? 'secondary' : 'ghost'}
+                  size="sm"
+                  className="h-7 w-7 p-0 flex items-center justify-center rounded"
+                  onClick={() => handleSetViewMode('grid')}
+                  title="Grid View"
+                >
+                  <LayoutGrid className="h-4 w-4" />
+                </Button>
+              </div>
             </div>
           </div>
 
@@ -299,8 +340,8 @@ export default function DocumentsPage() {
           )}
         </div>
 
-        {/* List Layout */}
-        <div className="space-y-2">
+        {/* List/Grid Layout Container */}
+        <div className={viewMode === 'grid' ? "grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-4" : "space-y-2"}>
           {isLoading ? (
             Array.from({ length: 4 }).map((_, i) => <DocumentSkeleton key={i} />)
           ) : filtered.length === 0 ? (
@@ -314,110 +355,173 @@ export default function DocumentsPage() {
               </p>
             </div>
           ) : (
-            filtered.map(doc => (
-              <Card
-                key={doc.id}
-                onContextMenu={(e) => handleContextMenu(e, doc)}
-                className="group flex items-center gap-4 p-4 hover:shadow-md transition-all cursor-pointer bg-card/45 hover:bg-card border-border/80 relative"
-                onClick={() => window.location.href = `/dashboard/documents/${doc.id}`}
-              >
-                {/* File Icon */}
-                <div className="w-9 h-9 bg-primary/10 text-primary rounded-lg flex items-center justify-center shrink-0">
-                  <FileText className="h-4 w-4" />
-                </div>
+            filtered.map(doc => {
+              const dropdownMenuContent = (
+                <DropdownMenuContent align="end" className="w-44 p-1 bg-white dark:bg-zinc-950 border border-border/80 shadow-md rounded-lg opacity-100" onClick={e => e.stopPropagation()}>
+                  <DropdownMenuItem
+                    onClick={(e) => {
+                      e.stopPropagation();
+                      handleFavoriteToggle(doc);
+                    }}
+                    className="gap-2 text-xs"
+                  >
+                    <Star className="h-4.5 w-4.5" />
+                    {doc.isFavorite ? 'Unfavorite' : 'Favorite'}
+                  </DropdownMenuItem>
+                  <DropdownMenuItem
+                    onClick={(e) => {
+                      e.stopPropagation();
+                      handlePinToggle(doc);
+                    }}
+                    className="gap-2 text-xs"
+                  >
+                    <Pin className="h-4.5 w-4.5 rotate-45" />
+                    {doc.isPinned ? 'Unpin' : 'Pin'}
+                  </DropdownMenuItem>
+                  <DropdownMenuItem
+                    onClick={(e) => {
+                      e.stopPropagation();
+                      handleOpenDuplicate(doc);
+                    }}
+                    className="gap-2 text-xs"
+                  >
+                    <Copy className="h-4.5 w-4.5" />
+                    Duplicate
+                  </DropdownMenuItem>
+                  {(doc.createdBy === user?.id || doc.role === 'OWNER') && (
+                    <>
+                      <DropdownMenuSeparator />
+                      <DropdownMenuItem
+                        onClick={(e) => {
+                          e.stopPropagation();
+                          handleDelete(doc.id, doc.title);
+                        }}
+                        className="gap-2 text-destructive focus:text-destructive text-xs"
+                      >
+                        <Trash2 className="h-4.5 w-4.5" />
+                        Delete
+                      </DropdownMenuItem>
+                    </>
+                  )}
+                </DropdownMenuContent>
+              );
 
-                {/* Title & Metadata */}
-                <div className="flex-1 min-w-0">
-                  <div className="flex items-center gap-2">
-                    <span className="font-semibold text-sm text-foreground truncate block">{doc.title}</span>
-                    {doc.isPinned && (
-                      <Badge variant="secondary" className="bg-primary/10 text-primary border-primary/20 text-[10px] gap-1 px-1.5 py-0.5 font-semibold shrink-0">
-                        <Pin className="h-2.5 w-2.5 rotate-45 fill-primary" />
-                        Pinned
-                      </Badge>
-                    )}
-                    {doc.isFavorite && <Star className="h-3.5 w-3.5 text-amber-500 fill-amber-500 shrink-0" />}
+              if (viewMode === 'grid') {
+                return (
+                  <Card
+                    key={doc.id}
+                    onContextMenu={(e) => handleContextMenu(e, doc)}
+                    className="group flex flex-col justify-between p-5 h-44 hover:shadow-md transition-all cursor-pointer bg-card/45 hover:bg-card border-border/80 relative rounded-xl"
+                    onClick={() => window.location.href = `/dashboard/documents/${doc.id}`}
+                  >
+                    {/* Top Row: File icon and actions dropdown */}
+                    <div className="flex items-center justify-between w-full">
+                      <div className="w-9 h-9 bg-primary/10 text-primary rounded-lg flex items-center justify-center shrink-0">
+                        <FileText className="h-4.5 w-4.5" />
+                      </div>
+                      
+                      {/* Direct Dropdown trigger menu */}
+                      <DropdownMenu>
+                        <DropdownMenuTrigger asChild onClick={e => e.stopPropagation()}>
+                          <Button variant="ghost" size="icon" className="h-8 w-8 opacity-0 group-hover:opacity-100 transition-opacity">
+                            <MoreHorizontal className="h-4 w-4" />
+                          </Button>
+                        </DropdownMenuTrigger>
+                        {dropdownMenuContent}
+                      </DropdownMenu>
+                    </div>
+
+                    {/* Middle Section: Title & Pinned/Favorite Icons */}
+                    <div className="flex-1 mt-3 w-full min-w-0">
+                      <div className="flex items-start gap-1.5 flex-wrap">
+                        <h3 className="font-semibold text-sm text-foreground line-clamp-2 w-full">{doc.title}</h3>
+                        <div className="flex gap-1.5 items-center mt-1 flex-wrap">
+                          {doc.isPinned && (
+                            <Badge variant="secondary" className="bg-primary/10 text-primary border-primary/20 text-[9px] gap-0.5 px-1 py-0.2 font-semibold">
+                              <Pin className="h-2 w-2 rotate-45 fill-primary" />
+                              Pinned
+                            </Badge>
+                          )}
+                          {doc.isFavorite && <Star className="h-3 w-3 text-amber-500 fill-amber-500" />}
+                        </div>
+                      </div>
+                    </div>
+
+                    {/* Bottom Row: Metadata & Tags */}
+                    <div className="mt-2 w-full flex items-center justify-between border-t border-border/30 pt-2 text-[10px] text-muted-foreground">
+                      <span>Updated {formatDate(doc.updatedAt)}</span>
+                      
+                      {doc.tags && doc.tags.length > 0 && (
+                        <div className="flex items-center gap-1">
+                          {doc.tags.slice(0, 1).map(tag => (
+                            <span key={tag.id} className="text-[8px] bg-secondary/80 px-1 py-0.2 rounded-full truncate max-w-[60px]">
+                              #{tag.name}
+                            </span>
+                          ))}
+                          {doc.tags.length > 1 && (
+                            <span>+{doc.tags.length - 1}</span>
+                          )}
+                        </div>
+                      )}
+                    </div>
+                  </Card>
+                );
+              }
+
+              // List view mode (default)
+              return (
+                <Card
+                  key={doc.id}
+                  onContextMenu={(e) => handleContextMenu(e, doc)}
+                  className="group flex items-center gap-4 p-4 hover:shadow-md transition-all cursor-pointer bg-card/45 hover:bg-card border-border/80 relative"
+                  onClick={() => window.location.href = `/dashboard/documents/${doc.id}`}
+                >
+                  {/* File Icon */}
+                  <div className="w-9 h-9 bg-primary/10 text-primary rounded-lg flex items-center justify-center shrink-0">
+                    <FileText className="h-4 w-4" />
                   </div>
-                  <p className="text-xs text-muted-foreground mt-0.5">Updated {formatDate(doc.updatedAt)}</p>
-                </div>
 
-                {/* Display Tags */}
-                {doc.tags && doc.tags.length > 0 && (
-                  <div className="hidden md:flex items-center gap-1">
-                    {doc.tags.slice(0, 2).map(tag => (
-                      <span key={tag.id} className="text-[9px] bg-secondary/85 text-secondary-foreground border border-border/70 px-1.5 py-0.5 rounded-full">
-                        #{tag.name}
-                      </span>
-                    ))}
-                    {doc.tags.length > 2 && (
-                      <span className="text-[9px] text-muted-foreground">+{doc.tags.length - 2}</span>
-                    )}
+                  {/* Title & Metadata */}
+                  <div className="flex-1 min-w-0">
+                    <div className="flex items-center gap-2">
+                      <span className="font-semibold text-sm text-foreground truncate block">{doc.title}</span>
+                      {doc.isPinned && (
+                        <Badge variant="secondary" className="bg-primary/10 text-primary border-primary/20 text-[10px] gap-1 px-1.5 py-0.5 font-semibold shrink-0">
+                          <Pin className="h-2.5 w-2.5 rotate-45 fill-primary" />
+                          Pinned
+                        </Badge>
+                      )}
+                      {doc.isFavorite && <Star className="h-3.5 w-3.5 text-amber-500 fill-amber-500 shrink-0" />}
+                    </div>
+                    <p className="text-xs text-muted-foreground mt-0.5">Updated {formatDate(doc.updatedAt)}</p>
                   </div>
-                )}
 
-                {/* {doc.role && (
-                  <Badge variant="secondary" className="hidden sm:inline-flex text-[10px] shrink-0 font-medium">
-                    {doc.role}
-                  </Badge>
-                )} */}
+                  {/* Display Tags */}
+                  {doc.tags && doc.tags.length > 0 && (
+                    <div className="hidden md:flex items-center gap-1">
+                      {doc.tags.slice(0, 2).map(tag => (
+                        <span key={tag.id} className="text-[9px] bg-secondary/85 text-secondary-foreground border border-border/70 px-1.5 py-0.5 rounded-full">
+                          #{tag.name}
+                        </span>
+                      ))}
+                      {doc.tags.length > 2 && (
+                        <span className="text-[9px] text-muted-foreground">+{doc.tags.length - 2}</span>
+                      )}
+                    </div>
+                  )}
 
-                {/* Direct Dropdown trigger menu */}
-                <DropdownMenu>
-                  <DropdownMenuTrigger asChild onClick={e => e.stopPropagation()}>
-                    <Button variant="ghost" size="icon" className="h-8 w-8 opacity-0 opacity-100 group-hover:opacity-100 transition-opacity">
-                      <MoreHorizontal className="h-4 w-4" />
-                    </Button>
-                  </DropdownMenuTrigger>
-                  <DropdownMenuContent align="end" className="w-44 p-1 bg-white dark:bg-zinc-950 border border-border/80 shadow-md rounded-lg opacity-100" onClick={e => e.stopPropagation()}>
-                    <DropdownMenuItem
-                      onClick={(e) => {
-                        e.stopPropagation();
-                        handleFavoriteToggle(doc);
-                      }}
-                      className="gap-2 text-xs"
-                    >
-                      <Star className="h-4.5 w-4.5" />
-                      {doc.isFavorite ? 'Unfavorite' : 'Favorite'}
-                    </DropdownMenuItem>
-                    <DropdownMenuItem
-                      onClick={(e) => {
-                        e.stopPropagation();
-                        handlePinToggle(doc);
-                      }}
-                      className="gap-2 text-xs"
-                    >
-                      <Pin className="h-4.5 w-4.5 rotate-45" />
-                      {doc.isPinned ? 'Unpin' : 'Pin'}
-                    </DropdownMenuItem>
-                    <DropdownMenuItem
-                      onClick={(e) => {
-                        e.stopPropagation();
-                        handleOpenDuplicate(doc);
-                      }}
-                      className="gap-2 text-xs"
-                    >
-                      <Copy className="h-4.5 w-4.5" />
-                      Duplicate
-                    </DropdownMenuItem>
-                    {(doc.createdBy === user?.id || doc.role === 'OWNER') && (
-                      <>
-                        <DropdownMenuSeparator />
-                        <DropdownMenuItem
-                          onClick={(e) => {
-                            e.stopPropagation();
-                            handleDelete(doc.id, doc.title);
-                          }}
-                          className="gap-2 text-destructive focus:text-destructive text-xs"
-                        >
-                          <Trash2 className="h-4.5 w-4.5" />
-                          Delete
-                        </DropdownMenuItem>
-                      </>
-                    )}
-                  </DropdownMenuContent>
-                </DropdownMenu>
-              </Card>
-            ))
+                  {/* Direct Dropdown trigger menu */}
+                  <DropdownMenu>
+                    <DropdownMenuTrigger asChild onClick={e => e.stopPropagation()}>
+                      <Button variant="ghost" size="icon" className="h-8 w-8 opacity-0 opacity-100 group-hover:opacity-100 transition-opacity">
+                        <MoreHorizontal className="h-4 w-4" />
+                      </Button>
+                    </DropdownMenuTrigger>
+                    {dropdownMenuContent}
+                  </DropdownMenu>
+                </Card>
+              );
+            })
           )}
         </div>
       </div>
